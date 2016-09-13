@@ -4,7 +4,7 @@
 
 #include "event_loop.h"
 #include "state/db.h"
-#include "state/directory.h"
+#include "state/object_table.h"
 #include "state/redis.h"
 
 SUITE(db_tests);
@@ -27,15 +27,15 @@ void test_callback(void *userdata) {
   free(reply);
 }
 
-TEST directory_lookup_test(void) {
+TEST object_table_lookup_test(void) {
   event_loop loop;
   event_loop_init(&loop);
   db_conn conn;
   db_connect("127.0.0.1", 6379, manager_addr, manager_port, &conn);
   int64_t index = db_attach(&conn, &loop, 0);
   unique_id id = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
-  directory_link(&conn, id);
-  directory_lookup(&conn, id, test_callback);
+  object_table_add(&conn, id);
+  object_table_lookup(&conn, id, test_callback);
   while (!lookup_successful) {
     int num_ready = event_loop_poll(&loop);
     if (num_ready < 0) {
@@ -56,7 +56,7 @@ TEST directory_lookup_test(void) {
 }
 
 SUITE(db_tests) {
-  RUN_TEST(directory_lookup_test);
+  RUN_TEST(object_table_lookup_test);
 }
 
 GREATEST_MAIN_DEFS();

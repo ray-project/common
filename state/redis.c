@@ -4,7 +4,7 @@
 
 #include "common.h"
 #include "db.h"
-#include "directory.h"
+#include "object_table.h"
 #include "event_loop.h"
 #include "redis.h"
 
@@ -129,17 +129,17 @@ int64_t db_attach(db_conn *db, event_loop *loop, int connection_type) {
                            POLLIN | POLLOUT);
 }
 
-void directory_link(db_conn *db, unique_id object_id) {
+void object_table_add(db_conn *db, unique_id object_id) {
   static char hex_object_id[2 * UNIQUE_ID_SIZE + 1];
   sha1_to_hex(&object_id.id[0], &hex_object_id[0]);
   redisAsyncCommand(db->context, NULL, NULL, "SADD obj:%s %d",
                     &hex_object_id[0], 0);
   if (db->context->err) {
-    LOG_REDIS_ERR(db->context, "could not add directory link");
+    LOG_REDIS_ERR(db->context, "could not add object_table entry");
   }
 }
 
-void directory_lookup_callback(redisAsyncContext *c, void *r, void *privdata) {
+void object_table_lookup_callback(redisAsyncContext *c, void *r, void *privdata) {
   redisReply *reply = r;
   if (reply == NULL)
     return;
@@ -149,7 +149,7 @@ void directory_lookup_callback(redisAsyncContext *c, void *r, void *privdata) {
   callback(str);
 }
 
-void directory_fetch_addr_port(redisAsyncContext *c, void *r, void *privdata) {
+void object_table_fetch_addr_port(redisAsyncContext *c, void *r, void *privdata) {
   redisReply *reply = r;
   if (reply == NULL)
     return;
@@ -163,18 +163,18 @@ void directory_fetch_addr_port(redisAsyncContext *c, void *r, void *privdata) {
     exit(-1);
   }
   db_conn *db = c->data;
-  redisAsyncCommand(db->context, directory_lookup_callback, privdata,
+  redisAsyncCommand(db->context, object_table_lookup_callback, privdata,
                     "HGET plasma_managers %lld", manager_id);
 }
 
-void directory_lookup(db_conn *db,
-                      unique_id object_id,
-                      lookup_callback callback) {
+void object_table_lookup(db_conn *db,
+                         unique_id object_id,
+                         lookup_callback callback) {
   static char hex_object_id[2 * UNIQUE_ID_SIZE + 1];
   sha1_to_hex(&object_id.id[0], &hex_object_id[0]);
-  redisAsyncCommand(db->context, directory_fetch_addr_port, callback,
+  redisAsyncCommand(db->context, object_table_fetch_addr_port, callback,
                     "SRANDMEMBER obj:%s", &hex_object_id[0]);
   if (db->context->err) {
-    LOG_REDIS_ERR(db->context, "error in directory lookup");
+    LOG_REDIS_ERR(db->context, "error in object_table lookup");
   }
 }

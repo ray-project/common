@@ -1,5 +1,5 @@
 #include "db.h"
-#include "directory.h"
+#include "object_table.h"
 
 #include "hiredis/hiredis.h"
 #include "hiredis/async.h"
@@ -14,6 +14,6 @@ struct db_conn_impl {
   event_loop *loop;
 };
 
-void directory_fetch_addr_port(redisAsyncContext *c, void *r, void *privdata);
+void object_table_fetch_addr_port(redisAsyncContext *c, void *r, void *privdata);
 
-void directory_lookup_callback(redisAsyncContext *c, void *r, void *privdata);
+void object_table_lookup_callback(redisAsyncContext *c, void *r, void *privdata);
