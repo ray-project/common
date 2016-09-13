@@ -15,7 +15,10 @@ clean:
 redis:
 	cd thirdparty ; bash ./build-redis.sh
 
-test: redis $(BUILD)/db_tests FORCE
+hiredis:
+	git submodule update --init --recursive -- "thirdparty/hiredis"
+
+test: redis hiredis $(BUILD)/db_tests FORCE
 	./thirdparty/redis-3.2.3/src/redis-server & sleep 1s ; ./build/db_tests
 
 FORCE:

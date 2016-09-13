@@ -25,4 +25,3 @@ install:
   - bash build.sh
   - make
   - make test
-  
