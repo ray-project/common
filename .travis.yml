@@ -22,6 +22,5 @@ matrix:
         - .travis/check-git-clang-format-output.sh
 
 install:
-  - bash build.sh
   - make
   - make test
