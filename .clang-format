@@ -3,3 +3,4 @@ DerivePointerAlignment: true
 IndentCaseLabels: false
 PointerAlignment: Right
 SpaceAfterCStyleCast: true
+

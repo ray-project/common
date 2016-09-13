@@ -15,7 +15,7 @@ clean:
 redis:
 	cd thirdparty ; bash ./build-redis.sh
 
-test: redis FORCE
+test: redis $(BUILD)/db_tests FORCE
 	./thirdparty/redis-3.2.3/src/redis-server & sleep 1s ; ./build/db_tests
 
 FORCE:
