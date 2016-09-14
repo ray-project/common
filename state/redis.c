@@ -139,7 +139,9 @@ void object_table_add(db_conn *db, unique_id object_id) {
   }
 }
 
-void object_table_lookup_callback(redisAsyncContext *c, void *r, void *privdata) {
+void object_table_lookup_callback(redisAsyncContext *c,
+                                  void *r,
+                                  void *privdata) {
   redisReply *reply = r;
   if (reply == NULL)
     return;
@@ -149,7 +151,9 @@ void object_table_lookup_callback(redisAsyncContext *c, void *r, void *privdata)
   callback(str);
 }
 
-void object_table_fetch_addr_port(redisAsyncContext *c, void *r, void *privdata) {
+void object_table_fetch_addr_port(redisAsyncContext *c,
+                                  void *r,
+                                  void *privdata) {
   redisReply *reply = r;
   if (reply == NULL)
     return;
