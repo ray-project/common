@@ -5,7 +5,10 @@
 #include "hiredis/async.h"
 
 struct db_conn_impl {
-  long long manager_id;
+  /* String that identifies this client type. */
+  char *client_type;
+  /* Unique ID for this client within the type. */
+  int64_t client_id;
   /* Redis context for this global state store connection. */
   redisAsyncContext *context;
   /* Which events are we processing (read, write)? */

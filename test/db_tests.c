@@ -31,7 +31,8 @@ TEST object_table_lookup_test(void) {
   event_loop loop;
   event_loop_init(&loop);
   db_conn conn;
-  db_connect("127.0.0.1", 6379, manager_addr, manager_port, &conn);
+  db_connect("127.0.0.1", 6379, "plasma_manager", manager_addr, manager_port,
+             &conn);
   int64_t index = db_attach(&conn, &loop, 0);
   unique_id id = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
   object_table_add(&conn, id);

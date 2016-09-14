@@ -59,26 +59,27 @@ static void poll_del_write(void *privdata) {
 
 void db_connect(const char *address,
                 int port,
-                const char *manager_addr,
-                int manager_port,
+                const char *client_type,
+                const char *client_addr,
+                int client_port,
                 db_conn *db) {
   /* Sync connection for initial handshake */
   redisReply *reply;
-  long long num_managers;
+  long long num_clients;
   redisContext *context = redisConnect(address, port);
   CHECK_REDIS_CONNECT(redisContext, context, "could not connect to redis %s:%d",
                       address, port);
   /* Add new client using optimistic locking. */
   while (1) {
-    reply = redisCommand(context, "WATCH plasma_managers");
+    reply = redisCommand(context, "WATCH %s", client_type);
     freeReplyObject(reply);
-    reply = redisCommand(context, "HLEN plasma_managers");
-    num_managers = reply->integer;
+    reply = redisCommand(context, "HLEN %s", client_type);
+    num_clients = reply->integer;
     freeReplyObject(reply);
     reply = redisCommand(context, "MULTI");
     freeReplyObject(reply);
-    reply = redisCommand(context, "HSET plasma_managers %lld %s:%d",
-                         num_managers, manager_addr, manager_port);
+    reply = redisCommand(context, "HSET %s %lld %s:%d", client_type,
+                         num_clients, client_addr, client_port);
     freeReplyObject(reply);
     reply = redisCommand(context, "EXEC");
     if (reply) {
@@ -89,7 +90,10 @@ void db_connect(const char *address,
   }
   redisFree(context);
 
-  db->manager_id = num_managers;
+  db->client_type = strdup(client_type);
+  db->client_id = num_clients;
+  db->reading = 0;
+  db->writing = 0;
 
   /* Establish async connection */
   db->context = redisAsyncConnect(address, port);
@@ -168,7 +172,7 @@ void object_table_fetch_addr_port(redisAsyncContext *c,
   }
   db_conn *db = c->data;
   redisAsyncCommand(db->context, object_table_lookup_callback, privdata,
-                    "HGET plasma_managers %lld", manager_id);
+                    "HGET %s %lld", db->client_type, manager_id);
 }
 
 void object_table_lookup(db_conn *db,

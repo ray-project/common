@@ -10,8 +10,9 @@ typedef struct db_conn_impl db_conn;
  * allocated by the caller. */
 void db_connect(const char *db_address,
                 int db_port,
-                const char *manager_addr,
-                int manager_port,
+                const char *client_type,
+                const char *client_addr,
+                int client_port,
                 db_conn *db);
 
 /* Attach global system store onnection to event loop. Returns the index of the
