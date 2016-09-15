@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <unistd.h>
 
-#include "event_loop.h"
+#include "sockets.h"
 
 SUITE(event_loop_tests);
 

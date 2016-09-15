@@ -35,11 +35,4 @@ struct pollfd *event_loop_get(event_loop *loop, int64_t index);
 void event_loop_set_data(event_loop *loop, int64_t index, void *data);
 void *event_loop_get_data(event_loop *loop, int64_t index);
 
-/* Helper functions for socket I/O, which a process can use to
- * communicate with an event loop in another process. */
-int bind_ipc_sock(const char* socket_pathname);
-int connect_ipc_sock(const char* socket_pathname);
-void send_ipc_sock(int socket_fd, char* message);
-char* recv_ipc_sock(int socket_fd);
-
 #endif
