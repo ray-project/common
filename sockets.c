@@ -13,11 +13,11 @@
  * pathname. Removes any existing file at the pathname. Returns
  * a file descriptor for the socket, or -1 if an error
  * occurred. */
-int bind_ipc_sock(const char* socket_pathname) {
+int bind_ipc_sock(const char *socket_pathname) {
   struct sockaddr_un socket_address;
   int socket_fd;
 
-  socket_fd = socket(PF_UNIX, SOCK_DGRAM, 0);
+  socket_fd = socket(AF_UNIX, SOCK_DGRAM, 0);
   if (socket_fd < 0) {
     LOG_ERR("socket() failed for pathname %s.", socket_pathname);
     return -1;
@@ -30,9 +30,11 @@ int bind_ipc_sock(const char* socket_pathname) {
     LOG_ERR("Socket pathname is too long.");
     return -1;
   }
-  strncpy(socket_address.sun_path, socket_pathname, strlen(socket_pathname) + 1);
+  strncpy(socket_address.sun_path, socket_pathname,
+          strlen(socket_pathname) + 1);
 
-  if (bind(socket_fd, (struct sockaddr *) &socket_address, sizeof(struct sockaddr_un)) != 0) {
+  if (bind(socket_fd, (struct sockaddr *) &socket_address,
+           sizeof(struct sockaddr_un)) != 0) {
     LOG_ERR("Bind failed for pathname %s.", socket_pathname);
     return -1;
   }
@@ -40,15 +42,14 @@ int bind_ipc_sock(const char* socket_pathname) {
   return socket_fd;
 }
 
-
 /* Connects to a Unix domain datagram socket at the given
  * pathname. Returns a file descriptor for the socket, or -1 if
  * an error occurred. */
-int connect_ipc_sock(const char* socket_pathname) {
+int connect_ipc_sock(const char *socket_pathname) {
   struct sockaddr_un socket_address;
   int socket_fd;
 
-  socket_fd = socket(PF_UNIX, SOCK_DGRAM, 0);
+  socket_fd = socket(AF_UNIX, SOCK_DGRAM, 0);
   if (socket_fd < 0) {
     LOG_ERR("socket() failed for pathname %s.", socket_pathname);
     return -1;
@@ -60,9 +61,11 @@ int connect_ipc_sock(const char* socket_pathname) {
     LOG_ERR("Socket pathname is too long.");
     return -1;
   }
-  strncpy(socket_address.sun_path, socket_pathname, strlen(socket_pathname) + 1);
+  strncpy(socket_address.sun_path, socket_pathname,
+          strlen(socket_pathname) + 1);
 
-  if (connect(socket_fd, (struct sockaddr *) &socket_address, sizeof(struct sockaddr_un)) != 0) {
+  if (connect(socket_fd, (struct sockaddr *) &socket_address,
+              sizeof(struct sockaddr_un)) != 0) {
     LOG_ERR("Connection to socket failed for pathname %s.", socket_pathname);
     return -1;
   }
@@ -71,7 +74,7 @@ int connect_ipc_sock(const char* socket_pathname) {
 }
 
 /* Sends a message on the given socket file descriptor. */
-void send_ipc_sock(int socket_fd, char* message) {
+void send_ipc_sock(int socket_fd, char *message) {
   int length = strlen(message);
   int nbytes;
   nbytes = send(socket_fd, (char *) &length, sizeof(length), 0);
@@ -87,7 +90,7 @@ void send_ipc_sock(int socket_fd, char* message) {
 }
 
 /* Receives a message on the given socket file descriptor. */
-char* recv_ipc_sock(int socket_fd) {
+char *recv_ipc_sock(int socket_fd) {
   int length;
   int nbytes;
   nbytes = recv(socket_fd, &length, sizeof(length), 0);

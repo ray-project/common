@@ -1,5 +1,5 @@
-#ifndef EVENT_LOOP_H
-#define EVENT_LOOP_H
+#ifndef SOCKETS_H
+#define SOCKETS_H
 
 /* Helper functions for socket communication. */
 int bind_ipc_sock(const char* socket_pathname);
