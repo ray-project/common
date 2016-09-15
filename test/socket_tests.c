@@ -8,7 +8,7 @@
 SUITE(event_loop_tests);
 
 TEST ipc_socket_test(void) {
-  const char* socket_pathname = "socket";
+  const char* socket_pathname = "test-socket";
   int socket_fd = bind_ipc_sock(socket_pathname);
   ASSERT(socket_fd >= 0);
 
@@ -19,6 +19,7 @@ TEST ipc_socket_test(void) {
     socket_fd = connect_ipc_sock(socket_pathname);
     ASSERT(socket_fd >= 0);
     send_ipc_sock(socket_fd, test_string);
+    close(socket_fd);
   } else {
     char* message = recv_ipc_sock(socket_fd);
     ASSERT(message != NULL);

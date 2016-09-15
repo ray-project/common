@@ -7,6 +7,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "common.h"
+
 /* Binds to a Unix domain datagram socket at the given
  * pathname. Removes any existing file at the pathname. Returns
  * a file descriptor for the socket, or -1 if an error
@@ -17,17 +19,21 @@ int bind_ipc_sock(const char* socket_pathname) {
 
   socket_fd = socket(PF_UNIX, SOCK_DGRAM, 0);
   if (socket_fd < 0) {
-    fprintf(stderr, "socket() failed\n");
+    LOG_ERR("socket() failed for pathname %s.", socket_pathname);
     return -1;
   }
 
   unlink(socket_pathname);
   memset(&socket_address, 0, sizeof(struct sockaddr_un));
   socket_address.sun_family = AF_UNIX;
+  if (strlen(socket_pathname) >= sizeof(socket_address.sun_path)) {
+    LOG_ERR("Socket pathname is too long.");
+    return -1;
+  }
   strncpy(socket_address.sun_path, socket_pathname, strlen(socket_pathname) + 1);
 
   if (bind(socket_fd, (struct sockaddr *) &socket_address, sizeof(struct sockaddr_un)) != 0) {
-    fprintf(stderr, "Bind failed\n");
+    LOG_ERR("Bind failed for pathname %s.", socket_pathname);
     return -1;
   }
 
@@ -44,16 +50,20 @@ int connect_ipc_sock(const char* socket_pathname) {
 
   socket_fd = socket(PF_UNIX, SOCK_DGRAM, 0);
   if (socket_fd < 0) {
-    fprintf(stderr, "socket() failed\n");
+    LOG_ERR("socket() failed for pathname %s.", socket_pathname);
     return -1;
   }
 
   memset(&socket_address, 0, sizeof(struct sockaddr_un));
   socket_address.sun_family = AF_UNIX;
+  if (strlen(socket_pathname) >= sizeof(socket_address.sun_path)) {
+    LOG_ERR("Socket pathname is too long.");
+    return -1;
+  }
   strncpy(socket_address.sun_path, socket_pathname, strlen(socket_pathname) + 1);
 
   if (connect(socket_fd, (struct sockaddr *) &socket_address, sizeof(struct sockaddr_un)) != 0) {
-    fprintf(stderr, "Connection to socket failed\n");
+    LOG_ERR("Connection to socket failed for pathname %s.", socket_pathname);
     return -1;
   }
 
@@ -74,7 +84,6 @@ void send_ipc_sock(int socket_fd, char* message) {
     fprintf(stderr, "Error sending to socket.\n");
     return;
   }
-  close(socket_fd);
 }
 
 /* Receives a message on the given socket file descriptor. */
