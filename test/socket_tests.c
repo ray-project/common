@@ -24,6 +24,7 @@ TEST ipc_socket_test(void) {
     char* message = recv_ipc_sock(socket_fd);
     ASSERT(message != NULL);
     ASSERT_STR_EQ(test_string, message);
+    free(message);
     close(socket_fd);
     unlink(socket_pathname);
   }

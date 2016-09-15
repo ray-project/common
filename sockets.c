@@ -89,7 +89,9 @@ void send_ipc_sock(int socket_fd, char *message) {
   }
 }
 
-/* Receives a message on the given socket file descriptor. */
+/* Receives a message on the given socket file descriptor. Allocates and
+ * returns a pointer to the message.
+ * NOTE: Caller must free the message! */
 char *recv_ipc_sock(int socket_fd) {
   int length;
   int nbytes;
