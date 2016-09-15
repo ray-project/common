@@ -26,7 +26,7 @@ int bind_ipc_sock(const char* socket_pathname) {
   unlink(socket_pathname);
   memset(&socket_address, 0, sizeof(struct sockaddr_un));
   socket_address.sun_family = AF_UNIX;
-  if (strlen(socket_pathname) >= sizeof(socket_address.sun_path)) {
+  if (strlen(socket_pathname) + 1 > sizeof(socket_address.sun_path)) {
     LOG_ERR("Socket pathname is too long.");
     return -1;
   }
@@ -56,7 +56,7 @@ int connect_ipc_sock(const char* socket_pathname) {
 
   memset(&socket_address, 0, sizeof(struct sockaddr_un));
   socket_address.sun_family = AF_UNIX;
-  if (strlen(socket_pathname) >= sizeof(socket_address.sun_path)) {
+  if (strlen(socket_pathname) + 1 > sizeof(socket_address.sun_path)) {
     LOG_ERR("Socket pathname is too long.");
     return -1;
   }

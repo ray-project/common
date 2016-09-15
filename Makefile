@@ -21,7 +21,7 @@ redis:
 hiredis:
 	git submodule update --init --recursive -- "thirdparty/hiredis" ; cd thirdparty/hiredis ; make
 
-test: hiredis redis $(BUILD)/db_tests $(BUILD)/event_loop_tests FORCE
+test: hiredis redis $(BUILD)/db_tests $(BUILD)/socket_tests FORCE
 	./thirdparty/redis-3.2.3/src/redis-server &
 	sleep 1s ; ./build/db_tests ; ./build/socket_tests
 
