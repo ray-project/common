@@ -6,6 +6,7 @@
 
 struct db_conn_impl {
   /* String that identifies this client type. */
+  /* Ion: say more about what the client type is */
   char *client_type;
   /* Unique ID for this client within the type. */
   int64_t client_id;
@@ -17,6 +18,7 @@ struct db_conn_impl {
   event_loop *loop;
 };
 
+/* Ion: say what the next functions are doing and what are the arguments, i.e., r and privdata */
 void object_table_fetch_addr_port(redisAsyncContext *c,
                                   void *r,
                                   void *privdata);
