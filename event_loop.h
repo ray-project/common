@@ -6,6 +6,7 @@
 
 #include "utarray.h"
 
+/* Ion: say what is this header about; add some comments */
 typedef struct {
   /* The type of connection (e.g. redis, client, manager, data transfer). */
   int type;
@@ -13,6 +14,7 @@ typedef struct {
   void *data;
 } event_loop_item;
 
+/* Ion: say what is the purpose of this data structure */
 typedef struct {
   /* Array of event_loop_items that hold information for connections. */
   UT_array *items;
@@ -21,6 +23,7 @@ typedef struct {
 } event_loop;
 
 /* Event loop functions. */
+/* Ion: While some of the function names are selfexplanatory, some are not; please add comments */
 void event_loop_init(event_loop *loop);
 void event_loop_free(event_loop *loop);
 int64_t event_loop_attach(event_loop *loop,
