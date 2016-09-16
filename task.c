@@ -12,19 +12,25 @@ typedef struct {
   union {
     unique_id id;
     struct {
-      ptrdiff_t val_offset;
-      int64_t val_length;
+      ptrdiff_t offset;
+      int64_t length;
     } val;
   };
 } task_arg;
 
 struct task_spec_impl {
   function_id func_id;
+  /* Total number of arguments. */
   int64_t num_args;
   /* Position of the argument that is currently constructed. */
   int64_t arg_cursor;
+  /* Number of return values. */
   int64_t num_returns;
+  /* Number of bytes the pass-by-value arguments are occupying. */
   int64_t args_value_size;
+  /* Offset in the argument data. */
+  int64_t args_value_cursor;
+  /* Argument and return IDs. */
   task_arg ids[0];
 };
 
@@ -34,6 +40,7 @@ task_spec *alloc_task_spec(function_id func_id, int64_t num_args, int64_t num_re
   memset(task, 0, size);
   task->func_id = func_id;
   task->num_args = num_args;
+  task->arg_cursor = 0;
   task->num_returns = num_returns;
   task->args_value_size = args_value_size;
   return task;
@@ -62,30 +69,32 @@ uint8_t *task_arg_val(task_spec *spec, int64_t arg_index) {
   CHECK(arg->type == ARG_BY_VAL);
   uint8_t *data = (uint8_t*) &spec->ids[0];
   data += (spec->num_args + spec->num_returns) * sizeof(task_arg);
-  return data + arg->val.val_offset;
+  return data + arg->val.offset;
 }
 
 int64_t task_arg_length(task_spec *spec, int64_t arg_index) {
   task_arg* arg = &spec->ids[arg_index];
   CHECK(arg->type == ARG_BY_VAL);
-  return arg->val.val_length;
+  return arg->val.length;
 }
 
-void task_arg_set_ref(task_spec *spec, int64_t arg_index, unique_id id) {
-  task_arg* arg = &spec->ids[arg_index];
+int64_t task_args_add_ref(task_spec *spec, unique_id id) {
+  task_arg* arg = &spec->ids[spec->arg_cursor];
   arg->type = ARG_BY_REF;
   arg->id = id;
+  return spec->arg_cursor++;
 }
 
-int64_t task_args_add_ref(task_spec *spec, unique_id id);
-int64_t task_args_add_val(task_spec *spec, uint8_t *data, int64_t length);
-
-void task_arg_set_val(task_spec *spec, int64_t arg_index, uint8_t *data, int64_t length) {
-  task_arg *arg = &spec->ids[arg_index];
+int64_t task_args_add_val(task_spec *spec, uint8_t *data, int64_t length) {
+  task_arg* arg = &spec->ids[spec->arg_cursor];
   arg->type = ARG_BY_VAL;
-  uint8_t *addr = task_arg_val(spec, arg_index);
-  memcpy(addr, data, length);
-  
+  arg->val.offset = spec->args_value_cursor;
+  arg->val.length = length;
+  uint8_t *addr = task_arg_val(spec, spec->arg_cursor);
+  CHECK(spec->args_value_cursor + length <= spec->args_value_size);
+  memcpy(addr + spec->args_value_cursor, data, length);
+  spec->args_value_cursor += length;
+  return spec->arg_cursor++;
 }
 
 unique_id *task_return(task_spec* spec, int64_t ret_index) {
