@@ -16,7 +16,9 @@ enum entity_type {
 };
 
 enum event_type {
-  EVENT_ARGS_SENT,
+  /* Scheduler */
+  EVENT_NEW_TASK,
+  EVENT_ASSIGN_TO_LOCAL,
   /* Object store */
   EVENT_CREATE_OBJECT,
   EVENT_GET_OBJECT,
