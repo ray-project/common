@@ -96,7 +96,8 @@ int accept_client(int socket_fd) {
   struct sockaddr_un client_addr;
   int client_fd, client_len;
   client_len = sizeof(client_addr);
-  client_fd = accept(socket_fd, (struct sockaddr*) &client_addr, (socklen_t*) &client_len);
+  client_fd = accept(socket_fd, (struct sockaddr *) &client_addr,
+                     (socklen_t *) &client_len);
   if (client_fd < 0) {
     LOG_ERR("Error reading from socket.");
     return -1;
