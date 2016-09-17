@@ -24,11 +24,8 @@ redis:
 hiredis:
 	git submodule update --init --recursive -- "thirdparty/hiredis" ; cd thirdparty/hiredis ; make
 
-test_task: $(BUILD)/task_tests
-	./build/task_tests
-
-test: hiredis redis $(BUILD)/db_tests $(BUILD)/socket_tests FORCE
+test: hiredis redis $(BUILD)/db_tests $(BUILD)/socket_tests $(BUILD)/task_tests FORCE
 	./thirdparty/redis-3.2.3/src/redis-server &
-	sleep 1s ; ./build/db_tests ; ./build/socket_tests
+	sleep 1s ; ./build/db_tests ; ./build/socket_tests ; ./build/task_tests
 
 FORCE:
