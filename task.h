@@ -9,6 +9,7 @@
 #include "common.h"
 
 typedef unique_id function_id;
+typedef unique_id object_id;
 
 typedef struct task_spec_impl task_spec;
 
@@ -35,7 +36,7 @@ int64_t task_arg_length(task_spec *spec, int64_t arg_index);
 
 /* Setting task arguments. Note that this API only allows you to set the
  * arguments in their order of appearance. */
-int64_t task_args_add_ref(task_spec *spec, unique_id arg_id);
+int64_t task_args_add_ref(task_spec *spec, object_id obj_id);
 int64_t task_args_add_val(task_spec *spec, uint8_t *data, int64_t length);
 
 /* Getting and setting return arguments. Tasks return by reference for now. */
