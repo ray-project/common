@@ -27,8 +27,8 @@ TEST task_test(void) {
   ASSERT(memcmp(task_arg_id(task, 2), &arg2, sizeof(arg2)) == 0);
   ASSERT(memcmp(task_arg_val(task, 3), (uint8_t*) "world", task_arg_length(task, 3)) == 0);
 
-  ASSERT(memcpy(task_return(task, 0), &ret0, sizeof(unique_id)) == 0);
-  ASSERT(memcpy(task_return(task, 1), &ret1, sizeof(unique_id)) == 0);
+  ASSERT(memcmp(task_return(task, 0), &ret0, sizeof(unique_id)) == 0);
+  ASSERT(memcmp(task_return(task, 1), &ret1, sizeof(unique_id)) == 0);
 
   free_task_spec(task);
   PASS();

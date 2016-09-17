@@ -33,11 +33,12 @@ unique_id *task_arg_id(task_spec *spec, int64_t arg_index);
 uint8_t *task_arg_val(task_spec *spec, int64_t arg_index);
 int64_t task_arg_length(task_spec *spec, int64_t arg_index);
 
-/* Setting task arguments. Note that this API only allows you to set the arguments in their order of appearance. */
-int64_t task_args_add_ref(task_spec *spec, unique_id id);
+/* Setting task arguments. Note that this API only allows you to set the
+ * arguments in their order of appearance. */
+int64_t task_args_add_ref(task_spec *spec, unique_id arg_id);
 int64_t task_args_add_val(task_spec *spec, uint8_t *data, int64_t length);
 
-/* Getting and setting return arguments. */
+/* Getting and setting return arguments. Tasks return by reference for now. */
 unique_id *task_return(task_spec* spec, int64_t ret_index);
 
 /* Freeing the task datastructure. */

@@ -6,12 +6,21 @@
 #include "common.h"
 #include "sockets.h"
 
+/* Tasks are stored in a consecutive chunk of memory, the first
+ * sizeof(task_spec) bytes are arranged acording to the struct
+ * task_spec. Then there is an array of task_args of length
+ * (num_args + num_returns), and then follows the data of
+ * pass-by-value arguments of size args_value_size. The offsets in the
+ * task_arg.val are with respect to the end of the struct, i.e.
+ * with respect to the address &task_spec.ids[0]. */
+ 
 typedef struct {
   /* Either ARG_BY_REF or ARG_BY_VAL. */
   int8_t type;
   union {
-    unique_id id;
+    unique_id arg_id;
     struct {
+      /* */
       ptrdiff_t offset;
       int64_t length;
     } val;
@@ -61,7 +70,7 @@ int8_t task_arg_type(task_spec* spec, int64_t arg_index) {
 unique_id *task_arg_id(task_spec *spec, int64_t arg_index) {
   task_arg* arg = &spec->ids[arg_index];
   CHECK(arg->type == ARG_BY_REF)
-  return &arg->id;
+  return &arg->arg_id;
 }
 
 uint8_t *task_arg_val(task_spec *spec, int64_t arg_index) {
@@ -78,10 +87,10 @@ int64_t task_arg_length(task_spec *spec, int64_t arg_index) {
   return arg->val.length;
 }
 
-int64_t task_args_add_ref(task_spec *spec, unique_id id) {
+int64_t task_args_add_ref(task_spec *spec, unique_id arg_id) {
   task_arg* arg = &spec->ids[spec->arg_cursor];
   arg->type = ARG_BY_REF;
-  arg->id = id;
+  arg->arg_id = arg_id;
   return spec->arg_cursor++;
 }
 
@@ -92,13 +101,13 @@ int64_t task_args_add_val(task_spec *spec, uint8_t *data, int64_t length) {
   arg->val.length = length;
   uint8_t *addr = task_arg_val(spec, spec->arg_cursor);
   CHECK(spec->args_value_cursor + length <= spec->args_value_size);
-  memcpy(addr + spec->args_value_cursor, data, length);
+  memcpy(addr, data, length);
   spec->args_value_cursor += length;
   return spec->arg_cursor++;
 }
 
 unique_id *task_return(task_spec* spec, int64_t ret_index) {
-  return &spec->ids[spec->num_args + ret_index].id;
+  return &spec->ids[spec->num_args + ret_index].arg_id;
 }
 
 void free_task_spec(task_spec *spec) {
