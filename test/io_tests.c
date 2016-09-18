@@ -6,28 +6,28 @@
 
 #include "io.h"
 
-SUITE(socket_tests);
+SUITE(io_tests);
 
 TEST ipc_socket_test(void) {
-  const char* socket_pathname = "test-socket";
+  const char *socket_pathname = "test-socket";
   int socket_fd = bind_ipc_sock(socket_pathname);
   ASSERT(socket_fd >= 0);
 
-  char* test_string = "hello world";
-  char* test_bytes = "another string";
+  char *test_string = "hello world";
+  char *test_bytes = "another string";
   pid_t pid = fork();
   if (pid == 0) {
     close(socket_fd);
     socket_fd = connect_ipc_sock(socket_pathname);
     ASSERT(socket_fd >= 0);
     write_string(socket_fd, test_string);
-    write_bytes(socket_fd, (uint8_t*) test_bytes, strlen(test_bytes));
+    write_bytes(socket_fd, (uint8_t *) test_bytes, strlen(test_bytes));
     close(socket_fd);
     exit(0);
   } else {
     int client_fd = accept_client(socket_fd);
     ASSERT(client_fd >= 0);
-    char* message = read_string(client_fd);
+    char *message = read_string(client_fd);
     ASSERT(message != NULL);
     ASSERT_STR_EQ(test_string, message);
     free(message);
@@ -43,14 +43,14 @@ TEST ipc_socket_test(void) {
   PASS();
 }
 
-SUITE(socket_tests) {
+SUITE(io_tests) {
   RUN_TEST(ipc_socket_test);
 }
 
 GREATEST_MAIN_DEFS();
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   GREATEST_MAIN_BEGIN();
-  RUN_SUITE(socket_tests);
+  RUN_SUITE(io_tests);
   GREATEST_MAIN_END();
 }

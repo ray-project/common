@@ -16,6 +16,6 @@ void write_bytes(int fd, uint8_t *bytes, int64_t length);
 void read_bytes(int fd, uint8_t **bytes, int64_t *length);
 
 void write_string(int fd, char *message);
-char* read_string(int fd);
+char *read_string(int fd);
 
 #endif

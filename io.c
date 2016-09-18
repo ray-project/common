@@ -106,7 +106,7 @@ void write_bytes(int fd, uint8_t *bytes, int64_t length) {
 
 /* Read a sequence of bytes written by write_bytes from a file descriptor.
  * Allocates and returns a pointer to the bytes.
- * .NOTE: Caller must fee the memory! */
+ * NOTE: Caller must free the memory! */
 void read_bytes(int fd, uint8_t **bytes, int64_t *length) {
   ssize_t nbytes = read(fd, length, sizeof(int64_t));
   if (nbytes < 0) {
@@ -132,10 +132,10 @@ void write_string(int fd, char *message) {
 
 /* Reads a null-terminated string from the file descriptor that has been
  * written by write_string. Allocates and returns a pointer to the string.
- * NOTE: Caller must fee the memory! */
-char* read_string(int fd) {
+ * NOTE: Caller must free the memory! */
+char *read_string(int fd) {
   uint8_t *bytes;
   int64_t length;
   read_bytes(fd, &bytes, &length);
-  return (char*) bytes;
+  return (char *) bytes;
 }
