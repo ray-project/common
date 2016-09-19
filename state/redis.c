@@ -5,6 +5,7 @@
 #include "common.h"
 #include "db.h"
 #include "object_table.h"
+#include "task_queue.h"
 #include "event_loop.h"
 #include "redis.h"
 
@@ -185,4 +186,8 @@ void object_table_lookup(db_conn *db,
   if (db->context->err) {
     LOG_REDIS_ERR(db->context, "error in object_table lookup");
   }
+}
+
+void task_queue_submit_task(db_conn *db, task_iid task_iid, task_spec* task) {
+  redisAsyncCommand(db->context, NULL, NULL, )
 }
