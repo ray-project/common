@@ -189,5 +189,6 @@ void object_table_lookup(db_conn *db,
 }
 
 void task_queue_submit_task(db_conn *db, task_iid task_iid, task_spec* task) {
-  redisAsyncCommand(db->context, NULL, NULL, )
+  redisAsyncCommand(db->context, NULL, NULL, "HMSET hello world test test");
+  // redisAsyncCommandArgv(db->context, NULL, NULL, );
 }
