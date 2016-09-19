@@ -188,7 +188,32 @@ void object_table_lookup(db_conn *db,
   }
 }
 
+#define TASK_QUEUE_ARG_SIZE 8
+#define QUEUE_PREFIX "queue:"
+#define QUEUE_ID_PREFIX "id:"
+#define QUEUE_VAL_PREFIX "val:"
+
 void task_queue_submit_task(db_conn *db, task_iid task_iid, task_spec* task) {
-  redisAsyncCommand(db->context, NULL, NULL, "HMSET hello world test test");
-  // redisAsyncCommandArgv(db->context, NULL, NULL, );
+  int argc = 2 + 2 * task_num_args(task);
+  char **argv = malloc(sizeof(char *) * argc);
+  argv[0] = "HMSET";
+  int64_t size = strlen(QUEUE_PREFIX) + 2 * UNIQUE_ID_SIZE + 1;
+  argv[1] = malloc(size);
+  strcpy(argv[1], QUEUE_PREFIX);
+  sha1_to_hex(&task_iid.id[0], argv[1] + strlen(QUEUE_PREFIX));
+  for (int i = 0; i < task_num_args(task); ++i) {
+    int64_t keysize = strlen(QUEUE_ID_PREFIX) + TASK_QUEUE_ARG_SIZE;
+    argv[2 + 2 * i] = malloc(keysize);
+    snprintf(argv[2 + 2 * i], keysize, QUEUE_ID_PREFIX "%d", i);
+    argv[2 + 2 * i + 1] = malloc(2 * UNIQUE_ID_SIZE + 1);
+    sha1_to_hex(&task_arg_id(task, i)->id[0], argv[2 + 2 * i + 1]);
+  }
+  redisAsyncCommandArgv(db->context, NULL, NULL, argc, (const char**) argv, NULL);
+  if (db->context->err) {
+    LOG_REDIS_ERR(db->context, "error while submitting task");
+  }
+  for (int i = 1; i < argc; ++i) {
+    free(argv[i]);
+  }
+  free(argv);
 }

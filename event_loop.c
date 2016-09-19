@@ -89,3 +89,10 @@ void event_loop_free(event_loop *loop) {
   utarray_free(loop->items);
   utarray_free(loop->waiting);
 }
+
+/* Return the type of connection. */
+int event_loop_type(event_loop *loop, int64_t index) {
+  event_loop_item *item =
+      (event_loop_item *) utarray_eltptr(loop->items, index);
+  return item->type;
+}

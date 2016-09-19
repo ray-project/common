@@ -4,8 +4,16 @@
 #include "db.h"
 #include "task.h"
 
+/* The task ID is a deterministic hash of the function ID that
+ * the task executes and the argument IDs or argument values */
 typedef unique_id task_id;
+
+/* The task instance ID is a globally unique ID generated which
+ * identifies this particular execution of the task */
 typedef unique_id task_iid;
+
+/* The node id is an identifier for the node the task is
+ * scheduled on */
 typedef unique_id node_id;
 
 /* Callback for subscribing to the task queue. The only argument this

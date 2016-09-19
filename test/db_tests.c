@@ -6,6 +6,7 @@
 #include "state/db.h"
 #include "state/object_table.h"
 #include "state/redis.h"
+#include "task.h"
 
 SUITE(db_tests);
 
@@ -56,8 +57,44 @@ TEST object_table_lookup_test(void) {
   PASS();
 }
 
+task_spec *example_task(void) {
+  function_id func_id = globally_unique_id();
+  task_spec *task = alloc_task_spec(func_id, 2, 1, 0);
+  task_args_add_ref(task, globally_unique_id());
+  task_args_add_ref(task, globally_unique_id());
+  return task;
+}
+
+/*
+TEST task_queue_test(void) {
+  event_loop loop;
+  event_loop_init(&loop);
+  db_conn conn;
+  db_connect("127.0.0.1", 6379, "local_scheduler", "", -1, &conn);
+  int64_t index = db_attach(&conn, &loop, 0);
+  
+  task_spec *task = example_task();
+  task_queue_submit_task(&conn, globally_unique_id(), task);
+  while (1) {
+    int num_ready = event_loop_poll(&loop);
+    if (num_ready < 0) {
+      exit(-1);
+    }
+    for (int i = 0; i < event_loop_size(&loop); ++i) {
+      struct pollfd *waiting = event_loop_get(&loop, i);
+      if (waiting->revents == 0)
+        continue;
+      if (i == index) {
+        db_event(&conn);
+      }
+    }
+  }
+}
+*/
+
 SUITE(db_tests) {
   RUN_TEST(object_table_lookup_test);
+  /* RUN_TEST(task_queue_test); */
 }
 
 GREATEST_MAIN_DEFS();
