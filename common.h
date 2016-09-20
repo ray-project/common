@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include <errno.h>
+#include <sys/socket.h>
 
 #ifdef NDEBUG
 #define LOG_DEBUG(M, ...)
@@ -37,5 +38,7 @@ unique_id globally_unique_id(void);
  * that buffer points to an already allocated char array of size 2 *
  * UNIQUE_ID_SIZE + 1 */
 char *sha1_to_hex(const unsigned char *sha1, char *buffer);
+
+typedef unique_id object_id;
 
 #endif
