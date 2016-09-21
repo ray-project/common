@@ -30,9 +30,9 @@
 
 // Cleanup method for running tests with the greatest library.
 // Runs the test, then clears the Redis database.
-#define RUN_REDIS_TEST(context, test) \
-  RUN_TEST(test);                     \
-  redisCommand(context, "FLUSHALL");
+#define RUN_REDIS_TEST(context, test)                 \
+  RUN_TEST(test);                                     \
+  freeReplyObject(redisCommand(context, "FLUSHALL"));
 
 typedef struct { unsigned char id[UNIQUE_ID_SIZE]; } unique_id;
 

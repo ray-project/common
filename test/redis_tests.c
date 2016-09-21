@@ -16,6 +16,7 @@ const char *test_get_format = "GET %s";
 const char *test_key = "foo";
 const char *test_value = "bar";
 
+
 void async_redis_socket_test_callback(redisAsyncContext *ac,
                                       void *r,
                                       void *privdata);
@@ -47,6 +48,7 @@ TEST redis_socket_test(void) {
   char *test_value = "bar";
   int client_fd = connect_ipc_sock(socket_pathname);
   ASSERT(client_fd >= 0);
+
   send_redis_command(client_fd, test_format, test_key, test_value);
 
   int server_fd = accept_client(socket_fd);
@@ -57,11 +59,14 @@ TEST redis_socket_test(void) {
   unlink(socket_pathname);
 
   redisAppendFormattedCommand(context, cmd, strlen(cmd));
-  redisGetReply(context, NULL);
+  redisReply *tmp;
+  redisGetReply(context, &tmp);
+  freeReplyObject(tmp);
   redisReply *reply = redisCommand(context, "GET %s", test_key);
   ASSERT(reply != NULL);
   ASSERT_STR_EQ(reply->str, test_value);
   freeReplyObject(reply);
+
   free(cmd);
   redisFree(context);
   PASS();
@@ -110,9 +115,12 @@ TEST async_redis_socket_test(void) {
         redisAsyncFormattedCommand(conn.context,
                                    async_redis_socket_test_callback, NULL, cmd,
                                    strlen(cmd));
+        free(cmd);
       }
     }
   }
+  db_disconnect(&conn);
+  event_loop_free(&loop);
   close(server_fd);
   close(client_fd);
   close(socket_fd);
@@ -123,7 +131,7 @@ TEST async_redis_socket_test(void) {
 
 SUITE(redis_tests) {
   redisContext *context = redisConnect("127.0.0.1", 6379);
-  redisCommand(context, "FLUSHALL");
+  freeReplyObject(redisCommand(context, "FLUSHALL"));
   RUN_REDIS_TEST(context, redis_socket_test);
   RUN_REDIS_TEST(context, async_redis_socket_test);
   redisFree(context);
