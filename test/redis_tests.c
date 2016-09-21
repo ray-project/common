@@ -16,11 +16,6 @@ const char *test_get_format = "GET %s";
 const char *test_key = "foo";
 const char *test_value = "bar";
 
-
-void async_redis_socket_test_callback(redisAsyncContext *ac,
-                                      void *r,
-                                      void *privdata);
-
 void async_redis_socket_test_callback(redisAsyncContext *ac,
                                       void *r,
                                       void *privdata) {
@@ -43,13 +38,10 @@ TEST redis_socket_test(void) {
   int socket_fd = bind_ipc_sock(socket_pathname);
   ASSERT(socket_fd >= 0);
 
-  char *test_format = "SET %s %s";
-  char *test_key = "foo";
-  char *test_value = "bar";
   int client_fd = connect_ipc_sock(socket_pathname);
   ASSERT(client_fd >= 0);
 
-  send_redis_command(client_fd, test_format, test_key, test_value);
+  send_redis_command(client_fd, test_set_format, test_key, test_value);
 
   int server_fd = accept_client(socket_fd);
   char *cmd = read_string(server_fd);
