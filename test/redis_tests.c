@@ -40,8 +40,9 @@ TEST redis_socket_test(void) {
 
   int client_fd = connect_ipc_sock(socket_pathname);
   ASSERT(client_fd >= 0);
-
-  send_redis_command(client_fd, test_set_format, test_key, test_value);
+  redis_conn client_redis;
+  init_redis_conn(&client_redis, "worker", 0, &client_fd);
+  send_redis_command(&client_redis, test_set_format, test_key, test_value);
 
   int server_fd = accept_client(socket_fd);
   char *cmd = read_string(server_fd);
@@ -50,10 +51,7 @@ TEST redis_socket_test(void) {
   close(socket_fd);
   unlink(socket_pathname);
 
-  redisAppendFormattedCommand(context, cmd, strlen(cmd));
-  redisReply *tmp;
-  redisGetReply(context, &tmp);
-  freeReplyObject(tmp);
+  redisCommand(context, cmd, 0, 0);
   redisReply *reply = redisCommand(context, "GET %s", test_key);
   ASSERT(reply != NULL);
   ASSERT_STR_EQ(reply->str, test_value);
@@ -82,7 +80,9 @@ TEST async_redis_socket_test(void) {
   /* Send a command to the Redis process. */
   client_fd = connect_ipc_sock(socket_pathname);
   ASSERT(client_fd >= 0);
-  send_redis_command(client_fd, test_set_format, test_key, test_value);
+  redis_conn client_redis;
+  init_redis_conn(&client_redis, "worker", 0, &client_fd);
+  send_redis_command(&client_redis, test_set_format, test_key, test_value);
 
   while (!lookup_successful) {
     int num_ready = event_loop_poll(&loop, -1);
@@ -104,9 +104,8 @@ TEST async_redis_socket_test(void) {
         event_loop_attach(&loop, 1, NULL, server_fd, POLLIN);
       } else {
         char *cmd = read_string(waiting->fd);
-        redisAsyncFormattedCommand(conn.context,
-                                   async_redis_socket_test_callback, NULL, cmd,
-                                   strlen(cmd));
+        redisAsyncCommand(conn.context, async_redis_socket_test_callback, NULL,
+                          cmd, conn.client_id, 0);
         free(cmd);
       }
     }

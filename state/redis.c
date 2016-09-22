@@ -233,22 +233,35 @@ void task_queue_submit_task(db_conn *db, task_iid task_iid, task_spec *task) {
   utstring_free(command);
 }
 
-void send_redis_command(int socket_fd, const char *format, ...) {
-  char *cmd;
+void init_redis_conn(redis_conn *redis,
+                     const char *client_type,
+                     int is_local,
+                     void *conn) {
+  redis->client_type = client_type;
+  redis->is_local = is_local;
+  redis->conn = conn;
+}
+
+void send_redis_command(redis_conn *redis, const char *format, ...) {
+  char cmd[256];
   va_list ap;
-  int len;
 
   va_start(ap, format);
-  len = redisvFormatCommand(&cmd, format, ap);
+  int nbytes = vsnprintf(cmd, sizeof(cmd), format, ap);
   va_end(ap);
-  if (len == -1) {
-    LOG_ERR("Out of memory while formatting Redis command.");
+  if (nbytes < 0) {
+    LOG_ERR("Encoding error while formatting Redis command.");
     return;
-  } else if (len == -2) {
-    LOG_ERR("Invalid Redis format string.");
+  } else if (nbytes >= sizeof(cmd)) {
+    LOG_ERR("Out of memory while formatting Redis command.");
     return;
   }
 
-  write_string(socket_fd, cmd);
-  free(cmd);
+  if (redis->is_local) {
+    db_conn *db = (db_conn *) redis->conn;
+    redisAsyncCommand(db->context, NULL, NULL, cmd);
+  } else {
+    int *socket_fd = (int *) redis->conn;
+    write_string(*socket_fd, cmd);
+  }
 }
