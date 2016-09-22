@@ -40,9 +40,7 @@ TEST redis_socket_test(void) {
 
   int client_fd = connect_ipc_sock(socket_pathname);
   ASSERT(client_fd >= 0);
-  redis_conn client_redis;
-  init_redis_conn(&client_redis, "worker", 0, &client_fd);
-  send_redis_command(&client_redis, test_set_format, test_key, test_value);
+  write_formatted_string(client_fd, test_set_format, test_key, test_value);
 
   int server_fd = accept_client(socket_fd);
   char *cmd = read_string(server_fd);
@@ -80,9 +78,7 @@ TEST async_redis_socket_test(void) {
   /* Send a command to the Redis process. */
   client_fd = connect_ipc_sock(socket_pathname);
   ASSERT(client_fd >= 0);
-  redis_conn client_redis;
-  init_redis_conn(&client_redis, "worker", 0, &client_fd);
-  send_redis_command(&client_redis, test_set_format, test_key, test_value);
+  write_formatted_string(client_fd, test_set_format, test_key, test_value);
 
   while (!lookup_successful) {
     int num_ready = event_loop_poll(&loop, -1);
