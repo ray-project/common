@@ -38,16 +38,6 @@ struct db_conn_impl {
 };
 
 typedef struct {
-  /* String that identifies this client type. */
-  char *client_type;
-  /* Whether or not we have a direct connection to Redis. */
-  int is_local;
-  /* Either a db_conn or a socket to a process with a db_conn,
-   * depending on the is_local flag. */
-  void *conn;
-} redis_conn;
-
-typedef struct {
   /* The callback that will be called. */
   lookup_callback callback;
   /* Object ID that is looked up. */
@@ -59,11 +49,5 @@ void object_table_get_entry(redisAsyncContext *c, void *r, void *privdata);
 void object_table_lookup_callback(redisAsyncContext *c,
                                   void *r,
                                   void *privdata);
-
-void init_redis_conn(redis_conn *redis,
-                     const char *client_type,
-                     int is_local,
-                     void *conn);
-void send_redis_command(redis_conn *redis, const char *format, ...);
 
 #endif
