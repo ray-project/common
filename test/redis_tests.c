@@ -151,7 +151,7 @@ TEST logging_test(void) {
   ray_log(logger, RAY_INFO, "TEST", "Message");
 
   while (!lookup_successful) {
-    int num_ready = event_loop_poll(&loop);
+    int num_ready = event_loop_poll(&loop, -1);
     if (num_ready < 0) {
       exit(-1);
     }
