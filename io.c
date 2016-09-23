@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 #include <stdarg.h>
+#include <utstring.h>
 
 #include "common.h"
 
@@ -142,19 +143,14 @@ char *read_string(int fd) {
 }
 
 void write_formatted_string(int socket_fd, const char *format, ...) {
-  char cmd[256];
+  UT_string *cmd;
   va_list ap;
 
+  utstring_new(cmd);
   va_start(ap, format);
-  int nbytes = vsnprintf(cmd, sizeof(cmd), format, ap);
+  utstring_printf_va(cmd, format, ap);
   va_end(ap);
-  if (nbytes < 0) {
-    LOG_ERR("Encoding error while formatting message.");
-    return;
-  } else if (nbytes >= sizeof(cmd)) {
-    LOG_ERR("Out of memory while formatting message.");
-    return;
-  }
 
-  write_string(socket_fd, cmd);
+  write_string(socket_fd, utstring_body(cmd));
+  utstring_free(cmd);
 }

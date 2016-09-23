@@ -25,12 +25,12 @@ ray_logger *init_ray_logger(const char *client_type,
                             int is_local,
                             void *conn);
 
+/* Log an event at the given log level with the given event_type.
+ * NOTE: message cannot contain spaces! JSON format is recommended.
+ * TODO: Support spaces in messages. */
 void ray_log(ray_logger *logger,
              int log_level,
-             const char *entity_type,
-             const char *entity_id,
              const char *event_type,
-             const char *message,
-             const char *related_entity_ids);
+             const char *message);
 
 #endif
