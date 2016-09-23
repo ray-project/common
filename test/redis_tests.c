@@ -60,8 +60,10 @@ TEST redis_socket_test(void) {
   close(socket_fd);
   unlink(socket_pathname);
 
-  redisCommand(context, cmd, 0, 0);
-  redisReply *reply = redisCommand(context, "GET %s", test_key);
+  redisReply *reply;
+  reply = redisCommand(context, cmd, 0, 0);
+  freeReplyObject(reply);
+  reply = redisCommand(context, "GET %s", test_key);
   ASSERT(reply != NULL);
   ASSERT_STR_EQ(reply->str, test_value);
   freeReplyObject(reply);
@@ -174,6 +176,7 @@ TEST logging_test(void) {
       }
     }
   }
+  free(logger);
   db_disconnect(&conn);
   event_loop_free(&loop);
   close(server_fd);
