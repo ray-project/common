@@ -16,13 +16,13 @@
 typedef struct ray_logger_impl ray_logger;
 
 /* Initialize a Ray logger for the given client type and logging level. If the
- * is_local flag is set, the logger will treat the given connection as a
+ * is_direct flag is set, the logger will treat the given connection as a
  * direct connection to the log. Otherwise, it will treat it as a socket to
  * another process with a connection to the log.
  * NOTE: User is responsible for freeing the returned logger. */
 ray_logger *init_ray_logger(const char *client_type,
                             int log_level,
-                            int is_local,
+                            int is_direct,
                             void *conn);
 
 /* Free the logger. This does not free the connection to the log. */

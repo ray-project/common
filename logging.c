@@ -16,20 +16,20 @@ struct ray_logger_impl {
   /* Suppress all log messages below this level. */
   int log_level;
   /* Whether or not we have a direct connection to Redis. */
-  int is_local;
+  int is_direct;
   /* Either a db_conn or a socket to a process with a db_conn,
-   * depending on the is_local flag. */
+   * depending on the is_direct flag. */
   void *conn;
 };
 
 ray_logger *init_ray_logger(const char *client_type,
                             int log_level,
-                            int is_local,
+                            int is_direct,
                             void *conn) {
   ray_logger *logger = malloc(sizeof(ray_logger));
   logger->client_type = client_type;
   logger->log_level = log_level;
-  logger->is_local = is_local;
+  logger->is_direct = is_direct;
   logger->conn = conn;
   return logger;
 }
@@ -56,7 +56,7 @@ void ray_log(ray_logger *logger,
 
   UT_string *origin_id;
   utstring_new(origin_id);
-  if (logger->is_local) {
+  if (logger->is_direct) {
     db_conn *db = (db_conn *) logger->conn;
     utstring_printf(origin_id, "%ld:%s", db->client_id, "");
     redisAsyncCommand(db->context, NULL, NULL, log_fmt,
