@@ -25,6 +25,9 @@ ray_logger *init_ray_logger(const char *client_type,
                             int is_local,
                             void *conn);
 
+/* Free the logger. This does not free the connection to the log. */
+void free_ray_logger(ray_logger *logger);
+
 /* Log an event at the given log level with the given event_type.
  * NOTE: message cannot contain spaces! JSON format is recommended.
  * TODO: Support spaces in messages. */

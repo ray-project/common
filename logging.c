@@ -34,6 +34,10 @@ ray_logger *init_ray_logger(const char *client_type,
   return logger;
 }
 
+void free_ray_logger(ray_logger *logger) {
+  free(logger);
+}
+
 void ray_log(ray_logger *logger,
              int log_level,
              const char *event_type,

@@ -176,7 +176,7 @@ TEST logging_test(void) {
       }
     }
   }
-  free(logger);
+  free_ray_logger(logger);
   db_disconnect(&conn);
   event_loop_free(&loop);
   close(server_fd);
