@@ -55,18 +55,18 @@ void ray_log(ray_logger *logger,
   if (logger->is_local) {
     db_conn *db = (db_conn *) logger->conn;
     utstring_printf(origin_id, "%ld:%s", db->client_id, "");
-    redisAsyncCommand(db->context, NULL, NULL, log_fmt, utstring_body(timestamp), logger->client_type,
+    redisAsyncCommand(db->context, NULL, NULL, log_fmt,
+                      utstring_body(timestamp), logger->client_type,
                       utstring_body(origin_id), log_levels[log_level],
-                      event_type, message,
-                      utstring_body(timestamp));
+                      event_type, message, utstring_body(timestamp));
   } else {
     /* If we don't own a Redis connection, we leave our client
      * ID to be filled in by someone else. */
     utstring_printf(origin_id, "%s:%s", "%ld", "%ld");
     int *socket_fd = (int *) logger->conn;
-    write_formatted_string(*socket_fd, log_fmt, utstring_body(timestamp), logger->client_type,
-                           utstring_body(origin_id), log_levels[log_level],
-                           event_type, message,
+    write_formatted_string(*socket_fd, log_fmt, utstring_body(timestamp),
+                           logger->client_type, utstring_body(origin_id),
+                           log_levels[log_level], event_type, message,
                            utstring_body(timestamp));
   }
   utstring_free(origin_id);
