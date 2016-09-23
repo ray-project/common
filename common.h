@@ -26,6 +26,18 @@
     }                                      \
   } while (0);
 
+/* Return and error codes. */
+
+/* If a fatal error happens, the process exits with an exit code. */
+
+#define GIVE_UP(STATUS_CODE) \
+  do { \
+    LOG_ERR("Giving up with status code %d", STATUS_CODE); \
+    exit(STATUS_CODE); \
+  } while (0);
+
+/* Unique IDs */
+
 #define UNIQUE_ID_SIZE 20
 
 /* Cleanup method for running tests with the greatest library.

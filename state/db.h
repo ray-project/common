@@ -15,7 +15,7 @@ void db_connect(const char *db_address,
                 int client_port,
                 db_conn *db);
 
-/* Attach global system store onnection to event loop. Returns the index of the
+/* Add the global system store onnection to event loop. Returns the index of the
  * connection in the loop. */
 int64_t db_attach(db_conn *db, event_loop *loop, int connection_type);
 

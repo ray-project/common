@@ -28,12 +28,12 @@ int64_t event_loop_attach(event_loop *loop,
                           int type,
                           void *data,
                           int fd,
-                          int events) {
+                          int events_tag) {
   assert(utarray_len(loop->items) == utarray_len(loop->waiting));
   int64_t index = utarray_len(loop->items);
   event_loop_item item = {.type = type, .data = data};
   utarray_push_back(loop->items, &item);
-  struct pollfd waiting = {.fd = fd, .events = events};
+  struct pollfd waiting = {.fd = fd, .events = events_tag};
   utarray_push_back(loop->waiting, &waiting);
   return index;
 }
