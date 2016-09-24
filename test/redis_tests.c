@@ -70,16 +70,20 @@ TEST redis_socket_test(void) {
 void redis_read_callback(event_loop *loop, int fd, void *context, int events) {
   db_conn *conn = context;
   char *cmd = read_string(fd);
-  redisAsyncCommand(conn->context, async_redis_socket_test_callback, NULL,
-                    cmd, conn->client_id, 0);
+  redisAsyncCommand(conn->context, async_redis_socket_test_callback, NULL, cmd,
+                    conn->client_id, 0);
   free(cmd);
 }
 
-void redis_accept_callback(event_loop *loop, int socket_fd, void *context, int events) {
+void redis_accept_callback(event_loop *loop,
+                           int socket_fd,
+                           void *context,
+                           int events) {
   int accept_fd = accept_client(socket_fd);
   CHECK(accept_fd >= 0);
   utarray_push_back(connections, &accept_fd);
-  event_loop_add_file(loop, accept_fd, EVENT_LOOP_READ, redis_read_callback, context);
+  event_loop_add_file(loop, accept_fd, EVENT_LOOP_READ, redis_read_callback,
+                      context);
 }
 
 int64_t timeout_handler(event_loop *loop, int64_t id, void *context) {
@@ -108,16 +112,19 @@ TEST async_redis_socket_test(void) {
   utarray_push_back(connections, &client_fd);
   write_formatted_string(client_fd, test_set_format, test_key, test_value);
 
-  event_loop_add_file(loop, client_fd, EVENT_LOOP_READ, redis_read_callback, &conn);
-  event_loop_add_file(loop, socket_fd, EVENT_LOOP_READ, redis_accept_callback, &conn);
+  event_loop_add_file(loop, client_fd, EVENT_LOOP_READ, redis_read_callback,
+                      &conn);
+  event_loop_add_file(loop, socket_fd, EVENT_LOOP_READ, redis_accept_callback,
+                      &conn);
   event_loop_add_timer(loop, 100, timeout_handler, NULL);
   event_loop_run(loop);
-  
+
   CHECK(async_redis_socket_test_callback_called);
 
   db_disconnect(&conn);
   event_loop_destroy(loop);
-  for (int *p = (int*) utarray_front(connections); p != NULL; p = (int*) utarray_next(connections, p)) {
+  for (int *p = (int *) utarray_front(connections); p != NULL;
+       p = (int *) utarray_next(connections, p)) {
     close(*p);
   }
   unlink(socket_pathname);
@@ -137,25 +144,32 @@ void logging_test_callback(redisAsyncContext *ac, void *r, void *privdata) {
   freeReplyObject(reply);
 }
 
-void logging_read_callback(event_loop *loop, int fd, void *context, int events) {
+void logging_read_callback(event_loop *loop,
+                           int fd,
+                           void *context,
+                           int events) {
   db_conn *conn = context;
   char *cmd = read_string(fd);
-  redisAsyncCommand(conn->context, logging_test_callback, NULL,
-                    cmd, conn->client_id, 0);
+  redisAsyncCommand(conn->context, logging_test_callback, NULL, cmd,
+                    conn->client_id, 0);
   free(cmd);
 }
 
-void logging_accept_callback(event_loop *loop, int socket_fd, void *context, int events) {
+void logging_accept_callback(event_loop *loop,
+                             int socket_fd,
+                             void *context,
+                             int events) {
   int accept_fd = accept_client(socket_fd);
   CHECK(accept_fd >= 0);
   utarray_push_back(connections, &accept_fd);
-  event_loop_add_file(loop, accept_fd, EVENT_LOOP_READ, logging_read_callback, context);
+  event_loop_add_file(loop, accept_fd, EVENT_LOOP_READ, logging_read_callback,
+                      context);
 }
 
 TEST logging_test(void) {
   utarray_new(connections, &ut_int_icd);
   event_loop *loop = event_loop_create();
-  
+
   /* Start IPC channel. */
   const char *socket_pathname = "logging-test-socket";
   int socket_fd = bind_ipc_sock(socket_pathname);
@@ -174,17 +188,20 @@ TEST logging_test(void) {
   ray_logger *logger = init_ray_logger("worker", RAY_INFO, 0, &client_fd);
   ray_log(logger, RAY_INFO, "TEST", "Message");
 
-  event_loop_add_file(loop, socket_fd, EVENT_LOOP_READ, logging_accept_callback, &conn);
-  event_loop_add_file(loop, client_fd, EVENT_LOOP_READ, logging_read_callback, &conn);
+  event_loop_add_file(loop, socket_fd, EVENT_LOOP_READ, logging_accept_callback,
+                      &conn);
+  event_loop_add_file(loop, client_fd, EVENT_LOOP_READ, logging_read_callback,
+                      &conn);
   event_loop_add_timer(loop, 100, timeout_handler, NULL);
   event_loop_run(loop);
-  
+
   CHECK(logging_test_callback_called);
 
   free_ray_logger(logger);
   db_disconnect(&conn);
   event_loop_destroy(loop);
-  for (int *p = (int*) utarray_front(connections); p != NULL; p = (int*) utarray_next(connections, p)) {
+  for (int *p = (int *) utarray_front(connections); p != NULL;
+       p = (int *) utarray_next(connections, p)) {
     close(*p);
   }
   unlink(socket_pathname);

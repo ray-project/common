@@ -17,12 +17,17 @@ typedef aeEventLoop event_loop;
  * context is the one that was passed into add_file by the user. The
  * events parameter indicates which event is available on the file,
  * it can be EVENT_LOOP_READ or EVENT_LOOP_WRITE. */
-typedef void (*event_loop_file_handler)(event_loop *loop, int fd, void *context, int events);
+typedef void (*event_loop_file_handler)(event_loop *loop,
+                                        int fd,
+                                        void *context,
+                                        int events);
 
 /* This handler will be called when a timer times out. The id of the timer
  * as well as the context that was specified when registering this handler
  * are passed as arguments. */
-typedef int64_t (*event_loop_timer_handler)(event_loop *loop, int64_t id, void *context);
+typedef int64_t (*event_loop_timer_handler)(event_loop *loop,
+                                            int64_t id,
+                                            void *context);
 
 /* Create and return a new event loop. */
 event_loop *event_loop_create();
