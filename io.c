@@ -111,6 +111,12 @@ void write_bytes(int fd, uint8_t *bytes, int64_t length) {
  * NOTE: Caller must free the memory! */
 void read_bytes(int fd, uint8_t **bytes, int64_t *length) {
   ssize_t nbytes = read(fd, length, sizeof(int64_t));
+  if (nbytes == 0) {
+    /* End of file. */
+    *length = 0;
+    *bytes = NULL;
+    return;
+  }
   if (nbytes < 0) {
     LOG_ERR("Error reading length of message from socket.");
     *bytes = NULL;

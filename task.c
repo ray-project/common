@@ -156,6 +156,10 @@ task_spec *read_task(int fd) {
   uint8_t *bytes;
   int64_t length;
   read_bytes(fd, &bytes, &length);
+  if (length == 0) {
+    /* End of file. */
+    return NULL;
+  }
   task_spec *spec = (task_spec *) bytes;
   CHECK(task_size(spec) == length);
   return spec;
@@ -179,6 +183,47 @@ void print_task(task_spec *spec, UT_string *output) {
     sha1_to_hex(&object_id->id[0], &hex[0]);
     utstring_printf(output, " ret:%d %s", i, &hex[0]);
   }
+}
+
+/*
+void print_task_redis(task_spec *spec, UT_string *output) {
+  static char hex[2 * UNIQUE_ID_SIZE + 1];
+  sha1_to_hex(&task_function(spec)->id[0], &hex[0]);
+  utstring_printf(output, "\r\n$3\r\nfun\r\n$40\r\n%s", &hex[0]);
+  for (int i = 0; i < task_num_args(spec); ++i) {
+    sha1_to_hex(&task_arg_id(spec, i)->id[0], &hex[0]);
+    utstring_printf(output, "\r\n$4\r\nid:%d\r\n$40\r\n%s", i, &hex[0]);
+  }
+  for (int i = 0; i < task_num_returns(spec); ++i) {
+    object_id *object_id = task_return(spec, i);
+    sha1_to_hex(&object_id->id[0], &hex[0]);
+    utstring_printf(output, "\r\n$5\r\nret:%d\r\n$40\r\n%s\r\n", i, &hex[0]);
+  }
+}
+*/
+
+const char *table[] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
+
+void print_task_redis(task_spec *spec, UT_string *output) {
+  /* Print function id. */
+  utstring_bincpy(output, "\r\n$3\r\nfun\r\n$20\r\n", 16);
+  utstring_bincpy(output, &task_function(spec)->id[0], UNIQUE_ID_SIZE);
+  /* Print arguments. */
+  for (int i = 0; i < task_num_args(spec); ++i) {
+    utstring_bincpy(output, "\r\n$4\r\nid:", 9);
+    utstring_bincpy(output, table[i], 1);
+    utstring_bincpy(output, "\r\n$20\r\n", 7);
+    utstring_bincpy(output, &task_arg_id(spec, i)->id[0], UNIQUE_ID_SIZE);
+  }
+  /* Print return ids. */
+  for (int i = 0; i < task_num_returns(spec); ++i) {
+    object_id *object_id = task_return(spec, i);
+    utstring_bincpy(output, "\r\n$5\r\nret:", 10);
+    utstring_bincpy(output, table[i], 1);
+    utstring_bincpy(output, "\r\n$20\r\n", 7);
+    utstring_bincpy(output, &object_id->id[0], UNIQUE_ID_SIZE);
+  }
+  utstring_bincpy(output, "\r\n", 2);
 }
 
 UT_icd unique_id_icd = {sizeof(unique_id), NULL, NULL, NULL};

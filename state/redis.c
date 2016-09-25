@@ -158,16 +158,35 @@ void object_table_lookup(db_conn *db,
   }
 }
 
-void task_queue_submit_task(db_conn *db, task_iid task_iid, task_spec *task) {
-  /* For converting an id to hex, which has double the number
-   * of bytes compared to the id (+ 1 byte for '\0'). */
+
+void task_queue_submit_task2(db_conn *db, task_iid task_iid, task_spec *task) {
   static char hex[2 * UNIQUE_ID_SIZE + 1];
   UT_string *command;
   utstring_new(command);
   sha1_to_hex(&task_iid.id[0], &hex[0]);
-  utstring_printf(command, "HMSET queue:%s", &hex[0]);
+  utstring_printf(command, "HMSET queue:%s ", &hex[0]);
   print_task(task, command);
-  redisAsyncCommand(db->context, NULL, NULL, utstring_body(command));
+  // do things by hand
+  char *target;
+  redisFormatCommand(&target, utstring_body(command));
+  printf("target: %s\n", target);
+  // end by hand
+  // redisAsyncCommand(db->context, NULL, NULL, utstring_body(command), utstring_len(command));
+  redisAsyncFormattedCommand(db->context, NULL, NULL, target, strlen(target));
+  if (db->context->err) {
+    LOG_REDIS_ERR(db->context, "error in task_queue submit_task");
+  }
+  utstring_free(command);
+  free(target);
+}
+
+void task_queue_submit_task(db_conn *db, task_iid task_iid, task_spec *task) {
+  UT_string *command;
+  utstring_new(command);
+  utstring_bincpy(command, "*12\r\n$5\r\nHMSET\r\n$26\r\nqueue:", 27);
+  utstring_bincpy(command, &task_iid.id[0], UNIQUE_ID_SIZE);
+  print_task_redis(task, command);
+  redisAsyncFormattedCommand(db->context, NULL, NULL, utstring_body(command), utstring_len(command));
   if (db->context->err) {
     LOG_REDIS_ERR(db->context, "error in task_queue submit_task");
   }

@@ -65,6 +65,8 @@ task_spec *read_task(int fd);
 /* Print task as a humanly readable string. */
 void print_task(task_spec *spec, UT_string *output);
 
+void print_task_redis(task_spec *spec, UT_string *output);
+
 /* Parse task as printed by print_task. */
 task_spec *parse_task(char *task_string, int64_t task_length);
 

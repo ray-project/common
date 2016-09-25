@@ -63,7 +63,7 @@ do {                                                       \
 #define utstring_init(s)                                   \
 do {                                                       \
   (s)->n = 0; (s)->i = 0; (s)->d = NULL;                   \
-  utstring_reserve(s,100);                                 \
+  utstring_reserve(s,500);                                 \
   (s)->d[0] = '\0';                                        \
 } while(0)
 
