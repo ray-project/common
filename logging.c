@@ -8,7 +8,7 @@
 
 static const char *log_levels[5] = {"DEBUG", "INFO", "WARN", "ERROR", "FATAL"};
 static const char *log_fmt =
-    "HMSET log:%s:%s:%s log_level %s event_type %s message %s timestamp %s";
+    "HMSET log:%s:%s:%s log_level %s event_type %s timestamp %s %s";
 
 struct ray_logger_impl {
   /* String that identifies this client type. */
@@ -41,7 +41,8 @@ void free_ray_logger(ray_logger *logger) {
 void ray_log(ray_logger *logger,
              int log_level,
              const char *event_type,
-             const char *message) {
+             const char *fmt,
+             ...) {
   if (log_level < logger->log_level) {
     return;
   }
@@ -54,15 +55,20 @@ void ray_log(ray_logger *logger,
   gettimeofday(&tv, NULL);
   utstring_printf(timestamp, "%ld.%ld", tv.tv_sec, tv.tv_usec);
 
-  UT_string *origin_id;
+  va_list args;
+  UT_string *entries, *origin_id;
+  va_start(args, fmt);
+  utstring_new(entries);
+  utstring_printf_va(entries, fmt, args);
+  va_end(args);
   utstring_new(origin_id);
   if (logger->is_direct) {
     db_handle *db = (db_handle *) logger->conn;
     utstring_printf(origin_id, "%ld:%s", db->client_id, "");
-    redisAsyncCommand(db->context, NULL, NULL, log_fmt,
-                      utstring_body(timestamp), logger->client_type,
-                      utstring_body(origin_id), log_levels[log_level],
-                      event_type, message, utstring_body(timestamp));
+    redisAsyncCommand(
+        db->context, NULL, NULL, log_fmt, utstring_body(timestamp),
+        logger->client_type, utstring_body(origin_id), log_levels[log_level],
+        event_type, utstring_body(timestamp), utstring_body(entries));
   } else {
     /* If we don't own a Redis connection, we leave our client
      * ID to be filled in by someone else. */
@@ -70,8 +76,8 @@ void ray_log(ray_logger *logger,
     int *socket_fd = (int *) logger->conn;
     write_formatted_string(*socket_fd, log_fmt, utstring_body(timestamp),
                            logger->client_type, utstring_body(origin_id),
-                           log_levels[log_level], event_type, message,
-                           utstring_body(timestamp));
+                           log_levels[log_level], event_type,
+                           utstring_body(timestamp), utstring_body(entries));
   }
   utstring_free(origin_id);
   utstring_free(timestamp);
