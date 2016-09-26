@@ -88,6 +88,7 @@ void db_disconnect(db_handle *db) {
     free(e);
   }
   free(db->client_type);
+  free(db);
 }
 
 void db_attach(db_handle *db, event_loop *loop) {
