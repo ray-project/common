@@ -31,12 +31,12 @@
     }                                                      \
   } while (0);
 
-void db_connect(const char *address,
-                int port,
-                const char *client_type,
-                const char *client_addr,
-                int client_port,
-                db_conn *db) {
+db_conn *db_connect(const char *address,
+                    int port,
+                    const char *client_type,
+                    const char *client_addr,
+                    int client_port) {
+  db_conn *db = malloc(sizeof(db_conn));
   /* Sync connection for initial handshake */
   redisReply *reply;
   long long num_clients;
@@ -75,6 +75,7 @@ void db_connect(const char *address,
   CHECK_REDIS_CONNECT(redisAsyncContext, db->context,
                       "could not connect to redis %s:%d", address, port);
   db->context->data = (void *) db;
+  return db;
 }
 
 void db_disconnect(db_conn *db) {
