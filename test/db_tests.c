@@ -45,10 +45,10 @@ int64_t timeout_handler(event_loop *loop, int64_t id, void *context) {
 
 TEST object_table_lookup_test(void) {
   event_loop *loop = event_loop_create();
-  db_conn *conn1 = db_connect("127.0.0.1", 6379, "plasma_manager",
-                              manager_addr, manager_port1);
-  db_conn *conn2 = db_connect("127.0.0.1", 6379, "plasma_manager",
-                              manager_addr, manager_port2);
+  db_handle *conn1 = db_connect("127.0.0.1", 6379, "plasma_manager",
+                                manager_addr, manager_port1);
+  db_handle *conn2 = db_connect("127.0.0.1", 6379, "plasma_manager",
+                                manager_addr, manager_port2);
   db_attach(conn1, loop);
   db_attach(conn2, loop);
   unique_id id = globally_unique_id();
@@ -74,7 +74,7 @@ TEST object_table_lookup_test(void) {
 
 TEST task_queue_test(void) {
   event_loop *loop = event_loop_create();
-  db_conn *conn = db_connect("127.0.0.1", 6379, "local_scheduler", "", -1);
+  db_handle *conn = db_connect("127.0.0.1", 6379, "local_scheduler", "", -1);
   db_attach(conn, loop);
 
   task_spec *task = example_task();
