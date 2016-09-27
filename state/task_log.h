@@ -36,7 +36,7 @@ typedef void (*task_log_callback)(task_iid task_iid, task_spec *task, task_statu
 /* Initially add a task to the task log. */
 void task_log_add_task(task_iid task_iid, task_spec *task, task_status task_status);
 
-/* Submit task to the global scheduler. */
+/* Update task in the task log. */
 void task_log_update_task(db_handle *db, task_iid task_iid, task_status status);
 
 /* Register callback for a certain event. */
