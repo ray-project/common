@@ -108,7 +108,7 @@ void write_message(int fd, int64_t type, int64_t length, uint8_t *bytes) {
   nbytes = write(fd, (char *) &length, sizeof(length));
   CHECK(nbytes > 0);
   nbytes = write(fd, (char *) bytes, length * sizeof(char));
-  CHECK(nbytes > 0);
+  CHECK(nbytes >= 0);
 }
 
 /**
@@ -129,12 +129,19 @@ void write_message(int fd, int64_t type, int64_t length, uint8_t *bytes) {
  */
 void read_message(int fd, int64_t *type, int64_t *length, uint8_t **bytes) {
   ssize_t nbytes = read(fd, type, sizeof(int64_t));
-  CHECK(nbytes > 0);
+  CHECK(nbytes >= 0);
+  /* Handle the case in which the socket is closed. */
+  if (nbytes == 0) {
+    *type = DISCONNECT_CLIENT;
+    *length = 0;
+    *bytes = NULL;
+    return;
+  }
   nbytes = read(fd, length, sizeof(int64_t));
   CHECK(nbytes > 0);
   *bytes = malloc(*length * sizeof(uint8_t));
   nbytes = read(fd, *bytes, *length);
-  CHECK(nbytes > 0);
+  CHECK(nbytes >= 0);
 }
 
 /* Write a null-terminated string to a file descriptor. */
