@@ -4,7 +4,7 @@ BUILD = build
 
 all: hiredis $(BUILD)/libcommon.a
 
-$(BUILD)/libcommon.a: event_loop.o common.o task.o io.o state/redis.o thirdparty/ae/ae.o
+$(BUILD)/libcommon.a: logging.o event_loop.o common.o task.o io.o state/redis.o thirdparty/ae/ae.o
 	ar rcs $@ $^
 
 $(BUILD)/common_tests: test/common_tests.c $(BUILD)/libcommon.a
