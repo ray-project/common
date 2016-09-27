@@ -17,10 +17,10 @@ typedef unique_id task_iid;
 typedef unique_id node_id;
 
 enum scheduling_status {
-  TASK_WAITING,
-  TASK_SCHEDULED,
-  TASK_RUNNING,
-  TASK_DONE
+  TASK_WAITING = 0,
+  TASK_SCHEDULED = 1,
+  TASK_RUNNING = 2,
+  TASK_DONE = 4
 }
 
 typedef struct {
