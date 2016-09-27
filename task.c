@@ -8,6 +8,8 @@
 #include "common.h"
 #include "io.h"
 
+/* TASK SPECIFICATIONS */
+
 /* Tasks are stored in a consecutive chunk of memory, the first
  * sizeof(task_spec) bytes are arranged according to the struct
  * task_spec. Then there is an array of task_args of length
@@ -242,4 +244,42 @@ task_spec *parse_task(char *task_string, int64_t task_length) {
   utarray_free(args);
   utarray_free(returns);
   return spec;
+}
+
+/* SCHEDULED TASKS */
+
+struct scheduled_task_impl {
+  task_iid iid;
+  int32_t state;
+  node_id node;
+  task_spec spec;
+};
+
+scheduled_task *make_scheduled_task(task_iid task_iid, task_spec *spec, int32_t state, node_id node) {
+  int64_t size = sizeof(scheduled_task) - sizeof(task_spec) + task_size(spec);
+  scheduled_task *result = malloc(size);
+  result->iid = task_iid;
+  result->state = state;
+  memcpy(&result->spec, spec, task_size(spec));
+  return result;
+}
+
+int64_t scheduled_task_size(scheduled_task *task) {
+  return sizeof(scheduled_task) - sizeof(task_spec) + task_size(&task->spec);
+}
+
+task_iid *scheduled_task_iid(scheduled_task *task) {
+  return &task->iid;
+}
+
+node_id *scheduled_task_node(scheduled_task *task) {
+  return &task->node;
+}
+
+task_spec *scheduled_task_spec(scheduled_task *task) {
+  return &task->spec;
+}
+
+void scheduled_task_free(scheduled_task *task) {
+  free(task);
 }
