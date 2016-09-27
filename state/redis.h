@@ -3,6 +3,7 @@
 
 #include "db.h"
 #include "object_table.h"
+#include "task_log.h"
 
 #include "hiredis/hiredis.h"
 #include "hiredis/async.h"
@@ -24,8 +25,10 @@ struct db_handle_impl {
   int64_t client_id;
   /* Redis context for this global state store connection. */
   redisAsyncContext *context;
-  /* Which events are we processing (read, write)? */
-  int reading, writing;
+  /* Redis context for "subscribe" communication.
+   * Yes, we need a separate one for that, see
+   * https://github.com/redis/hiredis/issues/55 */
+  redisAsyncContext *sub_context;
   /* The event loop this global state store connection is part of. */
   event_loop *loop;
   /* Index of the database connection in the event loop */
@@ -43,6 +46,13 @@ typedef struct {
   /* Object ID that is looked up. */
   object_id object_id;
 } lookup_callback_data;
+
+typedef struct {
+  /* The callback that will be called. */
+  task_log_callback callback;
+  /* Userdata associated with the callback. */
+  void *userdata;
+} task_log_callback_data;
 
 void object_table_get_entry(redisAsyncContext *c, void *r, void *privdata);
 

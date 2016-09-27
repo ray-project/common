@@ -33,7 +33,7 @@ typedef struct {
 } task_status;
 
 /* Callback for subscribing to the task log. */
-typedef void (*task_log_callback)(task_iid task_iid, task_spec *task, task_status status);
+typedef void (*task_log_callback)(task_iid task_iid, task_spec *task, task_status status, void *userdata);
 
 /* Initially add a task to the task log. This adds the task specification and
  * the task status. */
@@ -44,6 +44,6 @@ void task_log_add_task(db_handle *db, task_iid task_iid, task_spec *task, task_s
 void task_log_update_task(db_handle *db, task_iid task_iid, task_status status);
 
 /* Register callback for a certain event. */
-void task_log_register_callback(db_handle *db, task_log_callback callback, task_status status_filter);
+void task_log_register_callback(db_handle *db, task_log_callback callback, task_status status_filter, void *userdata);
 
 #endif /* TASK_LOG_H */

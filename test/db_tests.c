@@ -72,17 +72,27 @@ TEST object_table_lookup_test(void) {
   PASS();
 }
 
+void task_log_test_callback(task_iid task_iid, task_spec* task, task_status status, void *userdata) {
+  CHECK(status.status == 333);
+  task_spec *other = userdata;
+  UT_string *pubsub;
+  utstring_new(pubsub);
+  print_task(task, pubsub);
+  utstring_new(pubsub);
+  print_task(other, pubsub);
+  CHECK(task_size(task) == task_size(other));
+  CHECK(memcmp(task, other, task_size(task)) == 0);
+}
+
 TEST task_queue_test(void) {
   event_loop *loop = event_loop_create();
   db_handle *db = db_connect("127.0.0.1", 6379, "local_scheduler", "", -1);
   db_attach(db, loop);
 
   task_spec *task = example_task();
-  task_status status = {.status = TASK_DONE, .node = NIL_ID};
+  task_status status = {.status = 42, .node = NIL_ID};
+  task_log_register_callback(db, task_log_test_callback, status, task);
   task_log_add_task(db, globally_unique_id(), task, status);
-  event_loop_add_timer(loop, 100, timeout_handler, NULL);
-  event_loop_run(loop);
-  task_log_register_callback(db, NULL, status);
   event_loop_add_timer(loop, 100, timeout_handler, NULL);
   event_loop_run(loop);
   free_task_spec(task);

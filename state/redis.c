@@ -65,8 +65,6 @@ db_handle *db_connect(const char *address,
 
   db->client_type = strdup(client_type);
   db->client_id = num_clients;
-  db->reading = 0;
-  db->writing = 0;
   db->service_cache = NULL;
   db->sync_context = context;
 
@@ -75,12 +73,18 @@ db_handle *db_connect(const char *address,
   CHECK_REDIS_CONNECT(redisAsyncContext, db->context,
                       "could not connect to redis %s:%d", address, port);
   db->context->data = (void *) db;
+  /* Establish async connection for subscription */
+  db->sub_context = redisAsyncConnect(address, port);
+  CHECK_REDIS_CONNECT(redisAsyncContext, db->sub_context,
+                      "could not connect to redis %s:%d (sub)", address, port);
+  db->sub_context->data = (void *) db;
   return db;
 }
 
 void db_disconnect(db_handle *db) {
   redisFree(db->sync_context);
   redisAsyncFree(db->context);
+  redisAsyncFree(db->sub_context);
   service_cache_entry *e, *tmp;
   HASH_ITER(hh, db->service_cache, e, tmp) {
     free(e->addr);
@@ -93,6 +97,7 @@ void db_disconnect(db_handle *db) {
 
 void db_attach(db_handle *db, event_loop *loop) {
   redisAeAttach(loop, db->context);
+  redisAeAttach(loop, db->sub_context);
 }
 
 void object_table_add(db_handle *db, unique_id object_id) {
@@ -174,27 +179,50 @@ void task_log_add_task(db_handle *db, task_iid task_iid, task_spec *task, task_s
   if (db->context->err) {
     LOG_REDIS_ERR(db->context, "error writing task in task_log_add_task");
   }
-  redisAsyncCommand(db->context, NULL, NULL, "PUBLISH task_log:%s hello", &hex[0]);
+  UT_string *pubsub;
+  utstring_new(pubsub);
+  print_task(task, pubsub);
+  redisAsyncCommand(db->context, NULL, NULL, "PUBLISH task_log:%s %s", &hex[0], utstring_body(pubsub), task_status.status);
   if (db->context->err) {
     LOG_REDIS_ERR(db->context, "error publishing task in task_log_add_task");
   }
+  utstring_free(pubsub);
   utstring_free(command);
 }
 
 void task_log_redis_callback(redisAsyncContext *c, void *reply, void *privdata) {
   redisReply *r = reply;
   if (reply == NULL) return;
-  printf("type is %d", r->type);
-  CHECK(r->type == REDIS_REPLY_STRING);
-  task_log_callback callback = privdata;
-  printf("got response %s", r->str);
+  CHECK(r->type == REDIS_REPLY_ARRAY);
+  /* First entry is message type, second entry is topic, third entry is payload. */
+  CHECK(r->elements > 2);
+  /* If this condition is true, we got the initial message that acknowledged the subscription. */
+  if (r->element[2]->str == NULL) {
+    return;
+  }
+  /* Otherwise, parse the task and call the callback. */
+  CHECK(privdata);
+  task_log_callback_data *callback_data = privdata;
+  task_spec *task = parse_task(r->element[2]->str, r->element[2]->len);
+  CHECK(r->element[1]->type == REDIS_REPLY_STRING);
+  node_id node;
+  static char node_hex[UNIQUE_HEX_SIZE];
+  sscanf(r->element[1]->str, "task_log:%s ", &node_hex[0]);
+  hex_to_sha1(&node_hex[0], &node.id[0]);
+  /* TODO(pcm): Change placeholder by the actual status. */
+  task_status status = {.status = 333, .node = node};
+  callback_data->callback(NIL_ID, task, status, callback_data->userdata);
+  free_task_spec(task);
 }
 
-void task_log_register_callback(db_handle *db, task_log_callback callback, task_status status_filter) {
+void task_log_register_callback(db_handle *db, task_log_callback callback, task_status status_filter, void *userdata) {
   static char hex[UNIQUE_HEX_SIZE];
   sha1_to_hex(&status_filter.node.id[0], &hex[0]);
-  redisAsyncCommand(db->context, task_log_redis_callback, callback, "SUBSCRIBE task_log:%s", &hex[0]);
-  if (db->context->err) {
-    LOG_REDIS_ERR(db->context, "error in task_log_register_callback");
+  task_log_callback_data *callback_data = malloc(sizeof(task_log_callback_data));
+  callback_data->callback = callback;
+  callback_data->userdata = userdata;
+  redisAsyncCommand(db->sub_context, task_log_redis_callback, callback_data, "SUBSCRIBE task_log:%s", &hex[0]);
+  if (db->sub_context->err) {
+    LOG_REDIS_ERR(db->sub_context, "error in task_log_register_callback");
   }
 }
