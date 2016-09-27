@@ -16,12 +16,14 @@ typedef unique_id task_iid;
  * scheduled on */
 typedef unique_id node_id;
 
+/* The scheduling_status can be used as a flag in status_filter,
+ * for example TASK_WAITING | TASK_SCHEDULED. */
 enum scheduling_status {
   TASK_WAITING = 0,
   TASK_SCHEDULED = 1,
   TASK_RUNNING = 2,
   TASK_DONE = 4
-}
+};
 
 typedef struct {
   /* Of type scheduling_status. */
@@ -33,10 +35,12 @@ typedef struct {
 /* Callback for subscribing to the task log. */
 typedef void (*task_log_callback)(task_iid task_iid, task_spec *task, task_status status);
 
-/* Initially add a task to the task log. */
-void task_log_add_task(task_iid task_iid, task_spec *task, task_status task_status);
+/* Initially add a task to the task log. This adds the task specification and
+ * the task status. */
+void task_log_add_task(db_handle *db, task_iid task_iid, task_spec *task, task_status task_status);
 
-/* Update task in the task log. */
+/* Update task in the task log. This will append the new status to the
+ * task log. */
 void task_log_update_task(db_handle *db, task_iid task_iid, task_status status);
 
 /* Register callback for a certain event. */

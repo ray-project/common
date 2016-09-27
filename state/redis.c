@@ -9,7 +9,7 @@
 #include "common.h"
 #include "db.h"
 #include "object_table.h"
-#include "task_queue.h"
+#include "task_log.h"
 #include "event_loop.h"
 #include "redis.h"
 #include "io.h"
@@ -160,18 +160,41 @@ void object_table_lookup(db_handle *db,
   }
 }
 
-void task_queue_submit_task(db_handle *db, task_iid task_iid, task_spec *task) {
-  /* For converting an id to hex, which has double the number
-   * of bytes compared to the id (+ 1 byte for '\0'). */
-  static char hex[2 * UNIQUE_ID_SIZE + 1];
+void task_log_add_task(db_handle *db, task_iid task_iid, task_spec *task, task_status task_status) {
+  static char hex[UNIQUE_HEX_SIZE];
   UT_string *command;
   utstring_new(command);
   sha1_to_hex(&task_iid.id[0], &hex[0]);
-  utstring_printf(command, "HMSET queue:%s ", &hex[0]);
+  utstring_printf(command, "HMSET tasklog:%s ", &hex[0]);
   print_task(task, command);
+  sha1_to_hex(&task_status.node.id[0], &hex[0]);
+  utstring_printf(command, " status:0:status %d", task_status.status);
+  utstring_printf(command, " status:0:node %s", &hex[0]);
   redisAsyncCommand(db->context, NULL, NULL, utstring_body(command));
   if (db->context->err) {
-    LOG_REDIS_ERR(db->context, "error in task_queue submit_task");
+    LOG_REDIS_ERR(db->context, "error writing task in task_log_add_task");
+  }
+  redisAsyncCommand(db->context, NULL, NULL, "PUBLISH task_log:%s hello", &hex[0]);
+  if (db->context->err) {
+    LOG_REDIS_ERR(db->context, "error publishing task in task_log_add_task");
   }
   utstring_free(command);
+}
+
+void task_log_redis_callback(redisAsyncContext *c, void *reply, void *privdata) {
+  redisReply *r = reply;
+  if (reply == NULL) return;
+  printf("type is %d", r->type);
+  CHECK(r->type == REDIS_REPLY_STRING);
+  task_log_callback callback = privdata;
+  printf("got response %s", r->str);
+}
+
+void task_log_register_callback(db_handle *db, task_log_callback callback, task_status status_filter) {
+  static char hex[UNIQUE_HEX_SIZE];
+  sha1_to_hex(&status_filter.node.id[0], &hex[0]);
+  redisAsyncCommand(db->context, task_log_redis_callback, callback, "SUBSCRIBE task_log:%s", &hex[0]);
+  if (db->context->err) {
+    LOG_REDIS_ERR(db->context, "error in task_log_register_callback");
+  }
 }

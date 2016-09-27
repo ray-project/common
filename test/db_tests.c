@@ -6,7 +6,7 @@
 #include "test/example_task.h"
 #include "state/db.h"
 #include "state/object_table.h"
-#include "state/task_queue.h"
+#include "state/task_log.h"
 #include "state/redis.h"
 #include "task.h"
 
@@ -78,10 +78,13 @@ TEST task_queue_test(void) {
   db_attach(db, loop);
 
   task_spec *task = example_task();
-  task_queue_submit_task(db, globally_unique_id(), task);
+  task_status status = {.status = TASK_DONE, .node = NIL_ID};
+  task_log_add_task(db, globally_unique_id(), task, status);
   event_loop_add_timer(loop, 100, timeout_handler, NULL);
   event_loop_run(loop);
-
+  task_log_register_callback(db, NULL, status);
+  event_loop_add_timer(loop, 100, timeout_handler, NULL);
+  event_loop_run(loop);
   free_task_spec(task);
   db_disconnect(db);
   event_loop_destroy(loop);

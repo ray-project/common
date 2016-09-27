@@ -6,6 +6,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+const unique_id NIL_ID = {{255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+                           255, 255, 255, 255, 255, 255, 255, 255, 255, 255}};
+
 unique_id globally_unique_id(void) {
   /* Use /dev/urandom for "real" randomness. */
   int fd;
