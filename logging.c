@@ -79,6 +79,7 @@ void ray_log(ray_logger *logger,
                            log_levels[log_level], event_type,
                            utstring_body(timestamp), utstring_body(entries));
   }
+  utstring_free(entries);
   utstring_free(origin_id);
   utstring_free(timestamp);
 }

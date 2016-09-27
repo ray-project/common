@@ -111,8 +111,6 @@ TEST async_redis_socket_test(void) {
   utarray_push_back(connections, &client_fd);
   write_formatted_string(client_fd, test_set_format, test_key, test_value);
 
-  event_loop_add_file(loop, client_fd, EVENT_LOOP_READ, redis_read_callback,
-                      db);
   event_loop_add_file(loop, socket_fd, EVENT_LOOP_READ, redis_accept_callback,
                       db);
   event_loop_add_timer(loop, 100, timeout_handler, NULL);
@@ -187,8 +185,6 @@ TEST logging_test(void) {
   ray_log(logger, RAY_INFO, "TEST", "%s %d", "foo", 3);
 
   event_loop_add_file(loop, socket_fd, EVENT_LOOP_READ, logging_accept_callback,
-                      conn);
-  event_loop_add_file(loop, client_fd, EVENT_LOOP_READ, logging_read_callback,
                       conn);
   event_loop_add_timer(loop, 100, timeout_handler, NULL);
   event_loop_run(loop);
