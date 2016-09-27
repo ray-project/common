@@ -20,7 +20,7 @@ TEST ipc_socket_test(void) {
     close(socket_fd);
     socket_fd = connect_ipc_sock(socket_pathname);
     ASSERT(socket_fd >= 0);
-    write_string(socket_fd, test_string);
+    write_log_message(socket_fd, test_string);
     write_message(socket_fd, LOG_MESSAGE, strlen(test_bytes),
                   (uint8_t *) test_bytes);
     close(socket_fd);
@@ -28,7 +28,7 @@ TEST ipc_socket_test(void) {
   } else {
     int client_fd = accept_client(socket_fd);
     ASSERT(client_fd >= 0);
-    char *message = read_string(client_fd);
+    char *message = read_log_message(client_fd);
     ASSERT(message != NULL);
     ASSERT_STR_EQ(test_string, message);
     free(message);

@@ -24,8 +24,8 @@ int accept_client(int socket_fd);
 void write_message(int fd, int64_t type, int64_t length, uint8_t *bytes);
 void read_message(int fd, int64_t *type, int64_t *length, uint8_t **bytes);
 
-void write_string(int fd, char *message);
-void write_formatted_string(int fd, const char *format, ...);
-char *read_string(int fd);
+void write_log_message(int fd, char *message);
+void write_formatted_log_message(int fd, const char *format, ...);
+char *read_log_message(int fd);
 
 #endif

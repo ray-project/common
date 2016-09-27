@@ -55,14 +55,14 @@ int connect_ipc_sock(const char *socket_pathname) {
 
   socket_fd = socket(AF_UNIX, SOCK_STREAM, 0);
   if (socket_fd < 0) {
-    LOG_ERR("socket() failed for pathname %s.\n", socket_pathname);
+    LOG_ERR("socket() failed for pathname %s.", socket_pathname);
     return -1;
   }
 
   memset(&socket_address, 0, sizeof(struct sockaddr_un));
   socket_address.sun_family = AF_UNIX;
   if (strlen(socket_pathname) + 1 > sizeof(socket_address.sun_path)) {
-    LOG_ERR("Socket pathname is too long.\n");
+    LOG_ERR("Socket pathname is too long.");
     return -1;
   }
   strncpy(socket_address.sun_path, socket_pathname,
@@ -70,7 +70,7 @@ int connect_ipc_sock(const char *socket_pathname) {
 
   if (connect(socket_fd, (struct sockaddr *) &socket_address,
               sizeof(struct sockaddr_un)) != 0) {
-    LOG_ERR("Connection to socket failed for pathname %s.\n", socket_pathname);
+    LOG_ERR("Connection to socket failed for pathname %s.", socket_pathname);
     return -1;
   }
 
@@ -104,9 +104,9 @@ int accept_client(int socket_fd) {
  */
 void write_message(int fd, int64_t type, int64_t length, uint8_t *bytes) {
   ssize_t nbytes = write(fd, (char *) &type, sizeof(type));
-  CHECK(nbytes > 0);
+  CHECK(nbytes == sizeof(int64_t));
   nbytes = write(fd, (char *) &length, sizeof(length));
-  CHECK(nbytes > 0);
+  CHECK(nbytes == sizeof(int64_t));
   nbytes = write(fd, (char *) bytes, length * sizeof(char));
   CHECK(nbytes >= 0);
 }
@@ -138,22 +138,22 @@ void read_message(int fd, int64_t *type, int64_t *length, uint8_t **bytes) {
     return;
   }
   nbytes = read(fd, length, sizeof(int64_t));
-  CHECK(nbytes > 0);
+  CHECK(nbytes == sizeof(int64_t));
   *bytes = malloc(*length * sizeof(uint8_t));
   nbytes = read(fd, *bytes, *length);
   CHECK(nbytes >= 0);
 }
 
 /* Write a null-terminated string to a file descriptor. */
-void write_string(int fd, char *message) {
+void write_log_message(int fd, char *message) {
   /* Account for the \0 at the end of the string. */
   write_message(fd, LOG_MESSAGE, strlen(message) + 1, (uint8_t *) message);
 }
 
 /* Reads a null-terminated string from the file descriptor that has been
- * written by write_string. Allocates and returns a pointer to the string.
+ * written by write_log_message. Allocates and returns a pointer to the string.
  * NOTE: Caller must free the memory! */
-char *read_string(int fd) {
+char *read_log_message(int fd) {
   uint8_t *bytes;
   int64_t type;
   int64_t length;
@@ -162,7 +162,7 @@ char *read_string(int fd) {
   return (char *) bytes;
 }
 
-void write_formatted_string(int socket_fd, const char *format, ...) {
+void write_formatted_log_message(int socket_fd, const char *format, ...) {
   UT_string *cmd;
   va_list ap;
 
@@ -171,6 +171,6 @@ void write_formatted_string(int socket_fd, const char *format, ...) {
   utstring_printf_va(cmd, format, ap);
   va_end(ap);
 
-  write_string(socket_fd, utstring_body(cmd));
+  write_log_message(socket_fd, utstring_body(cmd));
   utstring_free(cmd);
 }
