@@ -246,7 +246,7 @@ task_spec *parse_task(char *task_string, int64_t task_length) {
   return spec;
 }
 
-/* SCHEDULED TASKS */
+/* TASK INSTANCES */
 
 struct scheduled_task_impl {
   task_iid iid;
@@ -255,31 +255,31 @@ struct scheduled_task_impl {
   task_spec spec;
 };
 
-scheduled_task *make_scheduled_task(task_iid task_iid, task_spec *spec, int32_t state, node_id node) {
+task_instance *make_task_instance(task_iid task_iid, task_spec *task, int32_t state, node_id node) {
   int64_t size = sizeof(scheduled_task) - sizeof(task_spec) + task_size(spec);
-  scheduled_task *result = malloc(size);
+  task_instance *result = malloc(size);
   result->iid = task_iid;
   result->state = state;
   memcpy(&result->spec, spec, task_size(spec));
   return result;
 }
 
-int64_t scheduled_task_size(scheduled_task *task) {
-  return sizeof(scheduled_task) - sizeof(task_spec) + task_size(&task->spec);
+int64_t task_instance_size(task_instance *instance) {
+  return sizeof(scheduled_task) - sizeof(task_spec) + task_size(&instance->spec);
 }
 
-task_iid *scheduled_task_iid(scheduled_task *task) {
-  return &task->iid;
+task_iid *task_instance_id(task_instance *instance) {
+  return &instance->iid;
 }
 
-node_id *scheduled_task_node(scheduled_task *task) {
-  return &task->node;
+node_id *task_instance_node(task_instance *instance) {
+  return &instance->node;
 }
 
-task_spec *scheduled_task_spec(scheduled_task *task) {
-  return &task->spec;
+task_spec *task_instance_task_spec(task_instance *instance) {
+  return &instance->spec;
 }
 
-void scheduled_task_free(scheduled_task *task) {
+void task_instance_free(task_instance *instance) {
   free(task);
 }

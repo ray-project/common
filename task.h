@@ -97,31 +97,34 @@ task_spec *parse_task(char *task_string, int64_t task_length);
 /* The scheduling_state can be used as a flag when we are listening for an event,
  * for example TASK_WAITING | TASK_SCHEDULED. */
 enum scheduling_state {
-  TASK_WAITING = 0,
-  TASK_SCHEDULED = 1,
-  TASK_RUNNING = 2,
-  TASK_DONE = 4
+  TASK_WAITING = 1,
+  TASK_SCHEDULED = 2,
+  TASK_RUNNING = 4,
+  TASK_DONE = 8
 };
 
-typedef struct scheduled_task_impl scheduled_task;
+/* A task instance is one execution of a task specification.
+ * It has a unique instance id, a state of execution (see scheduling_state)
+ * and a node it is scheduled on or running on. */
+typedef struct task_instance_impl task_instance;
 
-/* Allocate and initialize a new scheduled task. Must be freed with
+/* Allocate and initialize a new task instance. Must be freed with
  * scheduled_task_free after use. */
-scheduled_task *make_scheduled_task(task_iid task_iid, task_spec *task, int32_t state, node_id node);
+task_instance *make_task_instance(task_iid task_iid, task_spec *task, int32_t state, node_id node);
 
-/* Size of task log entry in bytes. */
-int64_t scheduled_task_size(scheduled_task *task);
+/* Size of task instance structure in bytes. */
+int64_t task_instance_size(task_instance *instance);
 
-/* Task instance id id. */
-task_iid *scheduled_task_iid(scheduled_task *task);
+/* Instance ID of the task instance. */
+task_iid *task_instance_id(task_instance *instance);
 
-/* Node this task has been scheduled on. */
-node_id *scheduled_task_node(scheduled_task *task);
+/* Node this task instance has been assigned to or is running on. */
+node_id *task_instance_node(task_instance *instance);
 
-/* Task specification of this scheduled task. */
-task_spec *scheduled_task_spec(scheduled_task *task);
+/* Task specification of this task instance. */
+task_spec *task_instance_task_spec(task_instance *instance);
 
-/* Free this scheduled task. */
-void scheduled_task_free(scheduled_task *task);
+/* Free this task instance datastructure. */
+void task_instance_free(task_instance *instance);
 
 #endif
