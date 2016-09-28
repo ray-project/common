@@ -1,6 +1,10 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -52,5 +56,9 @@ char *sha1_to_hex(const unsigned char *sha1, char *buffer);
 int hex_to_sha1(const char *hex, unsigned char *sha1);
 
 typedef unique_id object_id;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

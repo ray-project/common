@@ -1,6 +1,10 @@
 #ifndef REDIS_H
 #define REDIS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "db.h"
 #include "object_table.h"
 
@@ -49,5 +53,9 @@ void object_table_get_entry(redisAsyncContext *c, void *r, void *privdata);
 void object_table_lookup_callback(redisAsyncContext *c,
                                   void *r,
                                   void *privdata);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

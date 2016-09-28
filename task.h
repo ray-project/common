@@ -1,6 +1,10 @@
 #ifndef TASK_H
 #define TASK_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* This API specifies the task data structure. It is in C so we can
  * easily construct tasks from other languages like Python. The datastructures
  * are also defined in such a way that memory is contiguous and all pointers
@@ -67,5 +71,9 @@ void print_task(task_spec *spec, UT_string *output);
 
 /* Parse task as printed by print_task. */
 task_spec *parse_task(char *task_string, int64_t task_length);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

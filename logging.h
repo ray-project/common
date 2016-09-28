@@ -1,6 +1,10 @@
 #ifndef LOGGING_H
 #define LOGGING_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define RAY_VERBOSE -1
 #define RAY_DEBUG 0
 #define RAY_INFO 1
@@ -36,5 +40,9 @@ void ray_log(ray_logger *logger,
              const char *event_type,
              const char *fmt,
              ...);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

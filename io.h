@@ -1,6 +1,10 @@
 #ifndef IO_H
 #define IO_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 
 /* Helper functions for socket communication. */
@@ -18,5 +22,9 @@ void read_bytes(int fd, uint8_t **bytes, int64_t *length);
 void write_string(int fd, char *message);
 void write_formatted_string(int fd, const char *format, ...);
 char *read_string(int fd);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -1,6 +1,10 @@
 #ifndef EVENT_LOOP_H
 #define EVENT_LOOP_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include "ae/ae.h"
 
@@ -70,5 +74,9 @@ void event_loop_run(event_loop *loop);
 
 /* Stop the event loop. */
 void event_loop_stop(event_loop *loop);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
