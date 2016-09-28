@@ -18,12 +18,18 @@
  * occurred. */
 int bind_ipc_sock(const char *socket_pathname) {
   struct sockaddr_un socket_address;
-  int socket_fd;
-
-  socket_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+  int socket_fd = socket(AF_UNIX, SOCK_STREAM, 0);
   if (socket_fd < 0) {
     LOG_ERR("socket() failed for pathname %s.", socket_pathname);
     return -1;
+  }
+  /* Tell the system to allow the port to be reused. */
+  int on = 1;
+  if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, (char *) &on,
+                 sizeof(on)) < 0) {
+    LOG_ERR("setsockopt failed");
+    close(socket_fd);
+    exit(-1);
   }
 
   unlink(socket_pathname);
