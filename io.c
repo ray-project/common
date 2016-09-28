@@ -80,11 +80,7 @@ int connect_ipc_sock(const char *socket_pathname) {
 /* Accept a new client connection on the given socket
  * descriptor. Returns a descriptor for the new socket. */
 int accept_client(int socket_fd) {
-  struct sockaddr_un client_addr;
-  int client_fd, client_len;
-  client_len = sizeof(client_addr);
-  client_fd = accept(socket_fd, (struct sockaddr *) &client_addr,
-                     (socklen_t *) &client_len);
+  int client_fd = accept(socket_fd, NULL, NULL);
   if (client_fd < 0) {
     LOG_ERR("Error reading from socket.");
     return -1;
