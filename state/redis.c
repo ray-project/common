@@ -77,7 +77,7 @@ db_handle *db_connect(const char *address,
   /* Establish async connection for subscription */
   db->sub_context = redisAsyncConnect(address, port);
   CHECK_REDIS_CONNECT(redisAsyncContext, db->sub_context,
-                      "could not connect to redis %s:%d (sub)", address, port);
+                      "could not connect to redis %s:%d", address, port);
   db->sub_context->data = (void *) db;
 
   return db;
@@ -170,11 +170,9 @@ void object_table_lookup(db_handle *db,
 
 void task_log_add_task(db_handle *db, task_instance* task_instance) {
   task_iid task_iid = *task_instance_id(task_instance);
-  /*
   redisAsyncCommand(db->context, NULL, NULL, "HMSET tasklog:%b 0 %b",
                     (char*) &task_iid.id[0], UNIQUE_ID_SIZE,
                     (char*) task_instance, task_instance_size(task_instance));
-  */
   if (db->context->err) {
     LOG_REDIS_ERR(db->context, "error setting task in task_log_add_task");
   }
@@ -211,9 +209,14 @@ void task_log_register_callback(db_handle *db, task_log_callback callback, node_
   utarray_push_back(db->callback_freelist, &callback_data);
   callback_data->callback = callback;
   callback_data->userdata = userdata;
-  redisAsyncCommand(db->sub_context, task_log_redis_callback, callback_data,
-                    "SUBSCRIBE task_log:%b:%d",
-                    (char*) &node.id[0], UNIQUE_ID_SIZE, state);
+  if (memcmp(&node.id[0], &NIL_ID.id[0], UNIQUE_ID_SIZE) == 0) {
+    redisAsyncCommand(db->sub_context, task_log_redis_callback, callback_data,
+                      "PSUBSCRIBE task_log:*:%d", state);
+  } else {
+    redisAsyncCommand(db->sub_context, task_log_redis_callback, callback_data,
+                      "SUBSCRIBE task_log:%b:%d",
+                      (char*) &node.id[0], UNIQUE_ID_SIZE, state);
+  }
   if (db->sub_context->err) {
     LOG_REDIS_ERR(db->sub_context, "error in task_log_register_callback");
   }

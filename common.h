@@ -29,9 +29,6 @@
   } while (0);
 
 #define UNIQUE_ID_SIZE 20
-/* For converting an id to hex, which has double the number
-   * of bytes compared to the id (+ 1 byte for '\0'). */
-#define UNIQUE_HEX_SIZE (2 * UNIQUE_ID_SIZE + 1)
 
 /* Cleanup method for running tests with the greatest library.
  * Runs the test, then clears the Redis database. */
