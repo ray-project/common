@@ -8,6 +8,7 @@
 #include "hiredis/hiredis.h"
 #include "hiredis/async.h"
 #include "uthash.h"
+#include "utarray.h"
 
 typedef struct {
   /* Unique ID for this service. */
@@ -17,6 +18,13 @@ typedef struct {
   /* Handle for the uthash table. */
   UT_hash_handle hh;
 } service_cache_entry;
+
+typedef struct {
+  /* The callback that will be called. */
+  task_log_callback callback;
+  /* Userdata associated with the callback. */
+  void *userdata;
+} task_log_callback_data;
 
 struct db_handle_impl {
   /* String that identifies this client type. */
@@ -38,6 +46,8 @@ struct db_handle_impl {
   /* Redis context for synchronous connections.
    * Should only be used very rarely, it is not asynchronous. */
   redisContext *sync_context;
+  /* Data structure for callbacks that needs to be freed. */
+  UT_array *callback_freelist;
 };
 
 typedef struct {
@@ -46,13 +56,6 @@ typedef struct {
   /* Object ID that is looked up. */
   object_id object_id;
 } lookup_callback_data;
-
-typedef struct {
-  /* The callback that will be called. */
-  task_log_callback callback;
-  /* Userdata associated with the callback. */
-  void *userdata;
-} task_log_callback_data;
 
 void object_table_get_entry(redisAsyncContext *c, void *r, void *privdata);
 

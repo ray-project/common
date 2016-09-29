@@ -19,7 +19,7 @@
 typedef void (*task_log_callback)(task_instance* task_instance, void *userdata);
 
 /* Initially add a task instance to the task log. */
-void task_log_add_task(db_handle *db, task_iid task_iid, task_instance* task_instance);
+void task_log_add_task(db_handle *db, task_instance* task_instance);
 
 /* Update task instance in the task log. */
 void task_log_update_task(db_handle *db, task_iid task_iid, int32_t state, node_id node);

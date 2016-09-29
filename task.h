@@ -83,9 +83,6 @@ task_spec *read_task(int fd);
 /* Print task as a humanly readable string. */
 void print_task(task_spec *spec, UT_string *output);
 
-/* Parse task as printed by print_task. */
-task_spec *parse_task(char *task_string, int64_t task_length);
-
 /*
  * SCHEDULED TASK: Contains information about a scheduled task:
  * the task iid, the task specification and the task status
@@ -117,6 +114,9 @@ int64_t task_instance_size(task_instance *instance);
 
 /* Instance ID of the task instance. */
 task_iid *task_instance_id(task_instance *instance);
+
+/* The scheduling state of the task instance. */
+int32_t *task_instance_state(task_instance *instance);
 
 /* Node this task instance has been assigned to or is running on. */
 node_id *task_instance_node(task_instance *instance);

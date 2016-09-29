@@ -72,29 +72,25 @@ TEST object_table_lookup_test(void) {
   PASS();
 }
 
-void task_log_test_callback(task_iid task_iid, task_spec* task, task_status status, void *userdata) {
-  CHECK(status.status == 333);
-  task_spec *other = userdata;
-  UT_string *pubsub;
-  utstring_new(pubsub);
-  print_task(task, pubsub);
-  utstring_new(pubsub);
-  print_task(other, pubsub);
-  CHECK(task_size(task) == task_size(other));
-  CHECK(memcmp(task, other, task_size(task)) == 0);
+void task_log_test_callback(task_instance* instance, void *userdata) {
+  task_instance *other = userdata;
+  CHECK(*task_instance_state(instance) == TASK_SCHEDULED);
+  CHECK(task_instance_size(instance) == task_instance_size(other));
+  CHECK(memcmp(instance, other, task_instance_size(instance)) == 0);
 }
 
 TEST task_queue_test(void) {
   event_loop *loop = event_loop_create();
   db_handle *db = db_connect("127.0.0.1", 6379, "local_scheduler", "", -1);
   db_attach(db, loop);
-
+  node_id node = globally_unique_id();
   task_spec *task = example_task();
-  task_status status = {.status = 42, .node = NIL_ID};
-  task_log_register_callback(db, task_log_test_callback, status, task);
-  task_log_add_task(db, globally_unique_id(), task, status);
+  task_instance *instance = make_task_instance(globally_unique_id(), task, TASK_SCHEDULED, node);
+  task_log_register_callback(db, task_log_test_callback, node, TASK_SCHEDULED, instance);
+  task_log_add_task(db, instance);
   event_loop_add_timer(loop, 100, timeout_handler, NULL);
   event_loop_run(loop);
+  task_instance_free(instance);
   free_task_spec(task);
   db_disconnect(db);
   event_loop_destroy(loop);
@@ -105,7 +101,8 @@ SUITE(db_tests) {
   redisContext *context = redisConnect("127.0.0.1", 6379);
   freeReplyObject(redisCommand(context, "FLUSHALL"));
   RUN_REDIS_TEST(context, object_table_lookup_test);
-  RUN_REDIS_TEST(context, task_queue_test);
+  // RUN_REDIS_TEST(context, task_queue_test);
+  RUN_TEST(task_queue_test);
   redisFree(context);
 }
 

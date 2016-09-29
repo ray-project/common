@@ -51,11 +51,6 @@ unique_id globally_unique_id(void);
  * UNIQUE_ID_SIZE + 1 */
 char *sha1_to_hex(const unsigned char *sha1, char *buffer);
 
-/* Convert a hexdecimal string of length 40 to a 20 byte sha1 hash. This
- * function assumes that sha1 points to an already allocated char array of size
- * UNIQUE_ID_SIZE. */
-int hex_to_sha1(const char *hex, unsigned char *sha1);
-
 typedef unique_id object_id;
 
 #endif

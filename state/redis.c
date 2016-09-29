@@ -67,6 +67,7 @@ db_handle *db_connect(const char *address,
   db->client_id = num_clients;
   db->service_cache = NULL;
   db->sync_context = context;
+  utarray_new(db->callback_freelist, &ut_ptr_icd);
 
   /* Establish async connection */
   db->context = redisAsyncConnect(address, port);
@@ -78,6 +79,7 @@ db_handle *db_connect(const char *address,
   CHECK_REDIS_CONNECT(redisAsyncContext, db->sub_context,
                       "could not connect to redis %s:%d (sub)", address, port);
   db->sub_context->data = (void *) db;
+
   return db;
 }
 
@@ -92,6 +94,11 @@ void db_disconnect(db_handle *db) {
     free(e);
   }
   free(db->client_type);
+  void **p = NULL;
+  while ((p = (void **) utarray_next(db->callback_freelist, p))) {
+    free(*p);
+  }
+  utarray_free(db->callback_freelist);
   free(db);
 }
 
@@ -101,10 +108,8 @@ void db_attach(db_handle *db, event_loop *loop) {
 }
 
 void object_table_add(db_handle *db, unique_id object_id) {
-  static char hex_object_id[2 * UNIQUE_ID_SIZE + 1];
-  sha1_to_hex(&object_id.id[0], &hex_object_id[0]);
-  redisAsyncCommand(db->context, NULL, NULL, "SADD obj:%s %d",
-                    &hex_object_id[0], db->client_id);
+  redisAsyncCommand(db->context, NULL, NULL, "SADD obj:%b %d",
+                    &object_id.id[0], UNIQUE_ID_SIZE, db->client_id);
   if (db->context->err) {
     LOG_REDIS_ERR(db->context, "could not add object_table entry");
   }
@@ -153,41 +158,34 @@ void object_table_get_entry(redisAsyncContext *c, void *r, void *privdata) {
 void object_table_lookup(db_handle *db,
                          object_id object_id,
                          lookup_callback callback) {
-  static char hex_object_id[2 * UNIQUE_ID_SIZE + 1];
-  sha1_to_hex(&object_id.id[0], &hex_object_id[0]);
   lookup_callback_data *cb_data = malloc(sizeof(lookup_callback_data));
   cb_data->callback = callback;
   cb_data->object_id = object_id;
   redisAsyncCommand(db->context, object_table_get_entry, cb_data,
-                    "SMEMBERS obj:%s", &hex_object_id[0]);
+                    "SMEMBERS obj:%b", &object_id.id[0], UNIQUE_ID_SIZE);
   if (db->context->err) {
     LOG_REDIS_ERR(db->context, "error in object_table lookup");
   }
 }
 
-void task_log_add_task(db_handle *db, task_iid task_iid, task_spec *task, task_status task_status) {
-  static char hex[UNIQUE_HEX_SIZE];
-  UT_string *command;
-  utstring_new(command);
-  sha1_to_hex(&task_iid.id[0], &hex[0]);
-  utstring_printf(command, "HMSET tasklog:%s ", &hex[0]);
-  print_task(task, command);
-  sha1_to_hex(&task_status.node.id[0], &hex[0]);
-  utstring_printf(command, " status:0:status %d", task_status.status);
-  utstring_printf(command, " status:0:node %s", &hex[0]);
-  redisAsyncCommand(db->context, NULL, NULL, utstring_body(command));
+void task_log_add_task(db_handle *db, task_instance* task_instance) {
+  task_iid task_iid = *task_instance_id(task_instance);
+  /*
+  redisAsyncCommand(db->context, NULL, NULL, "HMSET tasklog:%b 0 %b",
+                    (char*) &task_iid.id[0], UNIQUE_ID_SIZE,
+                    (char*) task_instance, task_instance_size(task_instance));
+  */
   if (db->context->err) {
-    LOG_REDIS_ERR(db->context, "error writing task in task_log_add_task");
+    LOG_REDIS_ERR(db->context, "error setting task in task_log_add_task");
   }
-  UT_string *pubsub;
-  utstring_new(pubsub);
-  print_task(task, pubsub);
-  redisAsyncCommand(db->context, NULL, NULL, "PUBLISH task_log:%s %s", &hex[0], utstring_body(pubsub), task_status.status);
+  node_id node = *task_instance_node(task_instance);
+  int32_t state = *task_instance_state(task_instance);
+  redisAsyncCommand(db->context, NULL, NULL, "PUBLISH task_log:%b:%d %b",
+                    (char*) &node.id[0], UNIQUE_ID_SIZE, state,
+                    (char*) task_instance, task_instance_size(task_instance));
   if (db->context->err) {
     LOG_REDIS_ERR(db->context, "error publishing task in task_log_add_task");
   }
-  utstring_free(pubsub);
-  utstring_free(command);
 }
 
 void task_log_redis_callback(redisAsyncContext *c, void *reply, void *privdata) {
@@ -203,25 +201,19 @@ void task_log_redis_callback(redisAsyncContext *c, void *reply, void *privdata) 
   /* Otherwise, parse the task and call the callback. */
   CHECK(privdata);
   task_log_callback_data *callback_data = privdata;
-  task_spec *task = parse_task(r->element[2]->str, r->element[2]->len);
-  CHECK(r->element[1]->type == REDIS_REPLY_STRING);
-  node_id node;
-  static char node_hex[UNIQUE_HEX_SIZE];
-  sscanf(r->element[1]->str, "task_log:%s ", &node_hex[0]);
-  hex_to_sha1(&node_hex[0], &node.id[0]);
-  /* TODO(pcm): Change placeholder by the actual status. */
-  task_status status = {.status = 333, .node = node};
-  callback_data->callback(NIL_ID, task, status, callback_data->userdata);
-  free_task_spec(task);
+  task_instance *instance = malloc(r->element[2]->len);
+  memcpy(instance, r->element[2]->str, r->element[2]->len);
+  callback_data->callback(instance, callback_data->userdata);
+  task_instance_free(instance);
 }
-
-void task_log_register_callback(db_handle *db, task_log_callback callback, task_status status_filter, void *userdata) {
-  static char hex[UNIQUE_HEX_SIZE];
-  sha1_to_hex(&status_filter.node.id[0], &hex[0]);
+void task_log_register_callback(db_handle *db, task_log_callback callback, node_id node, int32_t state, void *userdata) {
   task_log_callback_data *callback_data = malloc(sizeof(task_log_callback_data));
+  utarray_push_back(db->callback_freelist, &callback_data);
   callback_data->callback = callback;
   callback_data->userdata = userdata;
-  redisAsyncCommand(db->sub_context, task_log_redis_callback, callback_data, "SUBSCRIBE task_log:%s", &hex[0]);
+  redisAsyncCommand(db->sub_context, task_log_redis_callback, callback_data,
+                    "SUBSCRIBE task_log:%b:%d",
+                    (char*) &node.id[0], UNIQUE_ID_SIZE, state);
   if (db->sub_context->err) {
     LOG_REDIS_ERR(db->sub_context, "error in task_log_register_callback");
   }
