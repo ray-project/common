@@ -168,7 +168,7 @@ void object_table_lookup(db_handle *db,
   }
 }
 
-void task_log_add_task(db_handle *db, task_instance* task_instance) {
+void task_log_add_task(db_handle *db, task_instance *task_instance) {
   task_iid task_iid = *task_instance_id(task_instance);
   redisAsyncCommand(db->context, NULL, NULL, "HMSET tasklog:%b 0 %b",
                     (char *) &task_iid.id[0], UNIQUE_ID_SIZE,
@@ -223,7 +223,7 @@ void task_log_register_callback(db_handle *db,
                       "PSUBSCRIBE task_log:*:%d", state);
   } else {
     redisAsyncCommand(db->sub_context, task_log_redis_callback, callback_data,
-                      "SUBSCRIBE task_log:%b:%d", (char*) &node.id[0],
+                      "SUBSCRIBE task_log:%b:%d", (char *) &node.id[0],
                       UNIQUE_ID_SIZE, state);
   }
   if (db->sub_context->err) {
