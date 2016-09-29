@@ -16,18 +16,26 @@
  * 6) global scheduler reads it to get the tasks that have finished; */
 
 /* Callback for subscribing to the task log. */
-typedef void (*task_log_callback)(task_instance* task_instance, void *userdata);
+typedef void (*task_log_callback)(task_instance *task_instance, void *userdata);
 
 /* Initially add a task instance to the task log. */
-void task_log_add_task(db_handle *db, task_instance* task_instance);
+void task_log_add_task(db_handle *db, task_instance *task_instance);
 
 /* Update task instance in the task log. */
-void task_log_update_task(db_handle *db, task_iid task_iid, int32_t state, node_id node);
+void task_log_update_task(db_handle *db,
+                          task_iid task_iid,
+                          int32_t state,
+                          node_id node);
 
 /* Register callback for a certain event. The node specifies the node whose
- * events we want to listen to. If you want to listen to all events for this node,
- * use state_filter = TASK_WAITING | TASK_SCHEDULED | TASK_RUNNING | TASK_DONE.
+ * events we want to listen to. If you want to listen to all events for this
+ * node, use state_filter =
+ *     TASK_WAITING | TASK_SCHEDULED | TASK_RUNNING | TASK_DONE.
  * If you want to register to updates from all nodes, set node = NIL_ID. */
-void task_log_register_callback(db_handle *db, task_log_callback callback, node_id node, int32_t state_filter, void *userdata);
+void task_log_register_callback(db_handle *db,
+                                task_log_callback callback,
+                                node_id node,
+                                int32_t state_filter,
+                                void *userdata);
 
 #endif /* TASK_LOG_H */

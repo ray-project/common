@@ -30,7 +30,7 @@ typedef unique_id node_id;
 /*
  * TASK SPECIFICATIONS: Contain all the information neccessary
  * to execute the task (function id, arguments, return object ids).
- * 
+ *
  */
 
 typedef struct task_spec_impl task_spec;
@@ -91,8 +91,8 @@ void print_task(task_spec *spec, UT_string *output);
  *
  */
 
-/* The scheduling_state can be used as a flag when we are listening for an event,
- * for example TASK_WAITING | TASK_SCHEDULED. */
+/* The scheduling_state can be used as a flag when we are listening
+ * for an event, for example TASK_WAITING | TASK_SCHEDULED. */
 enum scheduling_state {
   TASK_WAITING = 1,
   TASK_SCHEDULED = 2,
@@ -107,7 +107,10 @@ typedef struct task_instance_impl task_instance;
 
 /* Allocate and initialize a new task instance. Must be freed with
  * scheduled_task_free after use. */
-task_instance *make_task_instance(task_iid task_iid, task_spec *task, int32_t state, node_id node);
+task_instance *make_task_instance(task_iid task_iid,
+                                  task_spec *task,
+                                  int32_t state,
+                                  node_id node);
 
 /* Size of task instance structure in bytes. */
 int64_t task_instance_size(task_instance *instance);

@@ -192,7 +192,10 @@ struct task_instance_impl {
   task_spec spec;
 };
 
-task_instance *make_task_instance(task_iid task_iid, task_spec *spec, int32_t state, node_id node) {
+task_instance *make_task_instance(task_iid task_iid,
+                                  task_spec *spec,
+                                  int32_t state,
+                                  node_id node) {
   int64_t size = sizeof(task_instance) - sizeof(task_spec) + task_size(spec);
   task_instance *result = malloc(size);
   memset(result, 0, size);

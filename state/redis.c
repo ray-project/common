@@ -108,8 +108,8 @@ void db_attach(db_handle *db, event_loop *loop) {
 }
 
 void object_table_add(db_handle *db, unique_id object_id) {
-  redisAsyncCommand(db->context, NULL, NULL, "SADD obj:%b %d",
-                    &object_id.id[0], UNIQUE_ID_SIZE, db->client_id);
+  redisAsyncCommand(db->context, NULL, NULL, "SADD obj:%b %d", &object_id.id[0],
+                    UNIQUE_ID_SIZE, db->client_id);
   if (db->context->err) {
     LOG_REDIS_ERR(db->context, "could not add object_table entry");
   }
@@ -171,28 +171,32 @@ void object_table_lookup(db_handle *db,
 void task_log_add_task(db_handle *db, task_instance* task_instance) {
   task_iid task_iid = *task_instance_id(task_instance);
   redisAsyncCommand(db->context, NULL, NULL, "HMSET tasklog:%b 0 %b",
-                    (char*) &task_iid.id[0], UNIQUE_ID_SIZE,
-                    (char*) task_instance, task_instance_size(task_instance));
+                    (char *) &task_iid.id[0], UNIQUE_ID_SIZE,
+                    (char *) task_instance, task_instance_size(task_instance));
   if (db->context->err) {
     LOG_REDIS_ERR(db->context, "error setting task in task_log_add_task");
   }
   node_id node = *task_instance_node(task_instance);
   int32_t state = *task_instance_state(task_instance);
   redisAsyncCommand(db->context, NULL, NULL, "PUBLISH task_log:%b:%d %b",
-                    (char*) &node.id[0], UNIQUE_ID_SIZE, state,
-                    (char*) task_instance, task_instance_size(task_instance));
+                    (char *) &node.id[0], UNIQUE_ID_SIZE, state,
+                    (char *) task_instance, task_instance_size(task_instance));
   if (db->context->err) {
     LOG_REDIS_ERR(db->context, "error publishing task in task_log_add_task");
   }
 }
 
-void task_log_redis_callback(redisAsyncContext *c, void *reply, void *privdata) {
+void task_log_redis_callback(redisAsyncContext *c,
+                             void *reply,
+                             void *privdata) {
   redisReply *r = reply;
-  if (reply == NULL) return;
+  if (reply == NULL)
+    return;
   CHECK(r->type == REDIS_REPLY_ARRAY);
-  /* First entry is message type, second entry is topic, third entry is payload. */
+  /* First entry is message type, second is topic, third is payload. */
   CHECK(r->elements > 2);
-  /* If this condition is true, we got the initial message that acknowledged the subscription. */
+  /* If this condition is true, we got the initial message that acknowledged the
+   * subscription. */
   if (r->element[2]->str == NULL) {
     return;
   }
@@ -204,8 +208,13 @@ void task_log_redis_callback(redisAsyncContext *c, void *reply, void *privdata) 
   callback_data->callback(instance, callback_data->userdata);
   task_instance_free(instance);
 }
-void task_log_register_callback(db_handle *db, task_log_callback callback, node_id node, int32_t state, void *userdata) {
-  task_log_callback_data *callback_data = malloc(sizeof(task_log_callback_data));
+void task_log_register_callback(db_handle *db,
+                                task_log_callback callback,
+                                node_id node,
+                                int32_t state,
+                                void *userdata) {
+  task_log_callback_data *callback_data =
+      malloc(sizeof(task_log_callback_data));
   utarray_push_back(db->callback_freelist, &callback_data);
   callback_data->callback = callback;
   callback_data->userdata = userdata;
@@ -214,8 +223,8 @@ void task_log_register_callback(db_handle *db, task_log_callback callback, node_
                       "PSUBSCRIBE task_log:*:%d", state);
   } else {
     redisAsyncCommand(db->sub_context, task_log_redis_callback, callback_data,
-                      "SUBSCRIBE task_log:%b:%d",
-                      (char*) &node.id[0], UNIQUE_ID_SIZE, state);
+                      "SUBSCRIBE task_log:%b:%d", (char*) &node.id[0],
+                      UNIQUE_ID_SIZE, state);
   }
   if (db->sub_context->err) {
     LOG_REDIS_ERR(db->sub_context, "error in task_log_register_callback");
