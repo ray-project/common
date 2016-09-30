@@ -140,7 +140,7 @@ void read_message(int fd, int64_t *type, int64_t *length, uint8_t **bytes) {
     return;
   }
   nbytes = read(fd, length, sizeof(int64_t));
-  CHECK(nbytes == sizeof(int64_t));
+  CHECKM(nbytes == sizeof(int64_t), "Size was %zd", nbytes);
   *bytes = malloc(*length * sizeof(uint8_t));
   nbytes = read(fd, *bytes, *length);
   CHECK(nbytes >= 0);

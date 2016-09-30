@@ -28,10 +28,11 @@
     }                                      \
   } while (0);
 
-#define CHECKM(COND, M)                         \
+#define CHECKM(COND, M, ...)                    \
   do {                                          \
     if (!(COND)) {                              \
-      LOG_ERR("Check failure: %s \n" M, #COND); \
+      LOG_ERR("Check failure: %s \n" M, #COND,  \
+              ##__VA_ARGS__);                   \
       exit(-1);                                 \
     }                                           \
   } while (0);
