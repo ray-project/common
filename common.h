@@ -28,6 +28,14 @@
     }                                      \
   } while (0);
 
+#define CHECKM(COND, M)                         \
+  do {                                          \
+    if (!(COND)) {                              \
+      LOG_ERR("Check failure: %s \n" M, #COND); \
+      exit(-1);                                 \
+    }                                           \
+  } while (0);
+
 #define UNIQUE_ID_SIZE 20
 
 /* Cleanup method for running tests with the greatest library.
