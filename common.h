@@ -6,7 +6,7 @@
 #include <string.h>
 #include <errno.h>
 
-#ifndef DEBUG
+#ifndef RAY_COMMON_DEBUG
 #define LOG_DEBUG(M, ...)
 #else
 #define LOG_DEBUG(M, ...) \

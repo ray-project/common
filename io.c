@@ -98,13 +98,17 @@ int accept_client(int socket_fd) {
  * Reliably write a sequence of bytes into a file descriptor. This will block
  * until one of the following happens: (1) there is an error (2) end of file,
  * or (3) all length bytes have been written.
+ *
+ * @param fd The file descriptor to write to.
+ * @param cursor The cursor pointing to the beginning of the bytes to send.
+ * @param length The size of the bytes sequence to write.
+ * @return Void.
  */
-void write_reliable(int fd, char *cursor, size_t length) {
+void write_reliable(int fd, uint8_t *cursor, size_t length) {
   ssize_t nbytes = 0;
   while (length > 0) {
     /* While we haven't written the whole message, write to the file
-     * descriptor, advance the cursor, and decrease the amount left to write.
-     * */
+     * descriptor, advance the cursor, and decrease the amount left to write. */
     nbytes = write(fd, cursor, length);
     CHECK(nbytes > 0);
     cursor += nbytes;
@@ -123,21 +127,29 @@ void write_reliable(int fd, char *cursor, size_t length) {
  * @return Void.
  */
 void write_message(int fd, int64_t type, int64_t length, uint8_t *bytes) {
-  write_reliable(fd, (char *) &type, sizeof(type));
-  write_reliable(fd, (char *) &length, sizeof(length));
-  write_reliable(fd, (char *) bytes, length * sizeof(char));
+  write_reliable(fd, (uint8_t *) &type, sizeof(type));
+  write_reliable(fd, (uint8_t *) &length, sizeof(length));
+  write_reliable(fd, bytes, length * sizeof(char));
 }
 
 /**
- * The read method corresponding to write_reliable. Note that the given cursor
- * must already have allocated length number of bytes before calling this
- * method.
+ * Reliably read a sequence of bytes from a file descriptor into a buffer. This
+ * will block until one of the following happens: (1) there is an error (2) end
+ * of file, or (3) all length bytes have been written.
+ *
+ * @note The buffer pointed to by cursor must already have length number of
+ * bytes allocated before calling this method.
+ *
+ * @param fd The file descriptor to read from.
+ * @param cursor The cursor pointing to the beginning of the buffer.
+ * @param length The size of the byte sequence to read.
+ * @return Void.
  */
-int read_reliable(int fd, char *cursor, size_t length) {
+int read_reliable(int fd, uint8_t *cursor, size_t length) {
   ssize_t nbytes = 0;
   while (length > 0) {
     /* While we haven't read the whole message, read from the file descriptor,
-     * advance the cursor, and decrease the amount left to read.  */
+     * advance the cursor, and decrease the amount left to read. */
     nbytes = read(fd, cursor, length);
     if (nbytes < 0) {
       if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -172,16 +184,16 @@ int read_reliable(int fd, char *cursor, size_t length) {
  * @return Void.
  */
 void read_message(int fd, int64_t *type, int64_t *length, uint8_t **bytes) {
-  int closed = read_reliable(fd, (char *) type, sizeof(int64_t));
+  int closed = read_reliable(fd, (uint8_t *) type, sizeof(int64_t));
   if (closed) {
     goto disconnected;
   }
-  closed = read_reliable(fd, (char *) length, sizeof(int64_t));
+  closed = read_reliable(fd, (uint8_t *) length, sizeof(int64_t));
   if (closed) {
     goto disconnected;
   }
   *bytes = malloc(*length * sizeof(uint8_t));
-  closed = read_reliable(fd, (char *) *bytes, *length);
+  closed = read_reliable(fd, *bytes, *length);
   if (closed) {
     free(*bytes);
     goto disconnected;
