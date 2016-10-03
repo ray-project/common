@@ -104,7 +104,7 @@ int accept_client(int socket_fd) {
  * @param length The size of the bytes sequence to write.
  * @return Void.
  */
-void write_reliable(int fd, uint8_t *cursor, size_t length) {
+void write_bytes(int fd, uint8_t *cursor, size_t length) {
   ssize_t nbytes = 0;
   while (length > 0) {
     /* While we haven't written the whole message, write to the file
@@ -127,9 +127,9 @@ void write_reliable(int fd, uint8_t *cursor, size_t length) {
  * @return Void.
  */
 void write_message(int fd, int64_t type, int64_t length, uint8_t *bytes) {
-  write_reliable(fd, (uint8_t *) &type, sizeof(type));
-  write_reliable(fd, (uint8_t *) &length, sizeof(length));
-  write_reliable(fd, bytes, length * sizeof(char));
+  write_bytes(fd, (uint8_t *) &type, sizeof(type));
+  write_bytes(fd, (uint8_t *) &length, sizeof(length));
+  write_bytes(fd, bytes, length * sizeof(char));
 }
 
 /**
@@ -145,7 +145,7 @@ void write_message(int fd, int64_t type, int64_t length, uint8_t *bytes) {
  * @param length The size of the byte sequence to read.
  * @return Void.
  */
-int read_reliable(int fd, uint8_t *cursor, size_t length) {
+int read_bytes(int fd, uint8_t *cursor, size_t length) {
   ssize_t nbytes = 0;
   while (length > 0) {
     /* While we haven't read the whole message, read from the file descriptor,
@@ -184,16 +184,16 @@ int read_reliable(int fd, uint8_t *cursor, size_t length) {
  * @return Void.
  */
 void read_message(int fd, int64_t *type, int64_t *length, uint8_t **bytes) {
-  int closed = read_reliable(fd, (uint8_t *) type, sizeof(int64_t));
+  int closed = read_bytes(fd, (uint8_t *) type, sizeof(int64_t));
   if (closed) {
     goto disconnected;
   }
-  closed = read_reliable(fd, (uint8_t *) length, sizeof(int64_t));
+  closed = read_bytes(fd, (uint8_t *) length, sizeof(int64_t));
   if (closed) {
     goto disconnected;
   }
   *bytes = malloc(*length * sizeof(uint8_t));
-  closed = read_reliable(fd, *bytes, *length);
+  closed = read_bytes(fd, *bytes, *length);
   if (closed) {
     free(*bytes);
     goto disconnected;
