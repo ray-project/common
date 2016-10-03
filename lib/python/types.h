@@ -26,4 +26,6 @@ int PyObjectToUniqueID(PyObject* object, object_id *objectid);
 
 PyObject* PyObjectID_make(object_id object_id);
 
+PyObject *check_simple_value(PyObject *self, PyObject *args);
+
 #endif /* TYPES_H */

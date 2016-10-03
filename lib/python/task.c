@@ -137,15 +137,17 @@ static PyTypeObject PyTaskType = {
     PyType_GenericNew,         /* tp_new */
 };
 
-static PyMethodDef task_methods[] = {
-    {NULL}  /* Sentinel */
+static PyMethodDef common_methods[] = {
+  {"check_simple_value", check_simple_value, METH_VARARGS,
+   "Should the object be passed by value?"},
+  {NULL}  /* Sentinel */
 };
 
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
 #define PyMODINIT_FUNC void
 #endif
 
-PyMODINIT_FUNC inittask(void) {
+PyMODINIT_FUNC initcommon(void) {
   PyObject* m;
 
   if (PyType_Ready(&PyTaskType) < 0)
@@ -154,7 +156,7 @@ PyMODINIT_FUNC inittask(void) {
   if (PyType_Ready(&PyObjectIDType) < 0)
     return;
 
-  m = Py_InitModule3("task", task_methods,
+  m = Py_InitModule3("common", common_methods,
                      "Example module that creates an extension type.");
 
   Py_INCREF(&PyTaskType);
