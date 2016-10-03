@@ -10,6 +10,7 @@
 
 extern PyObject *CommonError;
 
+// clang-format off
 typedef struct {
   PyObject_HEAD
   object_id object_id;
@@ -19,12 +20,13 @@ typedef struct {
   PyObject_HEAD
   task_spec *spec;
 } PyTask;
+// clang-format on
 
 extern PyTypeObject PyObjectIDType;
 
-int PyObjectToUniqueID(PyObject* object, object_id *objectid);
+int PyObjectToUniqueID(PyObject *object, object_id *objectid);
 
-PyObject* PyObjectID_make(object_id object_id);
+PyObject *PyObjectID_make(object_id object_id);
 
 PyObject *check_simple_value(PyObject *self, PyObject *args);
 
