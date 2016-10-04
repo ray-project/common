@@ -24,6 +24,16 @@ int accept_client(int socket_fd);
 void write_message(int fd, int64_t type, int64_t length, uint8_t *bytes);
 void read_message(int fd, int64_t *type, int64_t *length, uint8_t **bytes);
 
+/**
+ * Read message into a buffer that has already been allocated.
+ *
+ * @param fd File descriptor the data is being read from.
+ * @param type Out parameter for the message type.
+ * @param length Size of the buffer, never read more data than this.
+ * @param bytes Memory location the data will be written to.
+ */
+void read_message_into(int fd, int64_t *type, int64_t length, uint8_t *bytes);
+
 void write_log_message(int fd, char *message);
 void write_formatted_log_message(int fd, const char *format, ...);
 char *read_log_message(int fd);

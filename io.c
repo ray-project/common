@@ -148,6 +148,7 @@ void write_message(int fd, int64_t type, int64_t length, uint8_t *bytes) {
 int read_bytes(int fd, uint8_t *cursor, size_t length) {
   ssize_t nbytes = 0;
   while (length > 0) {
+    printf("looping\n");
     /* While we haven't read the whole message, read from the file descriptor,
      * advance the cursor, and decrease the amount left to read. */
     nbytes = read(fd, cursor, length);
@@ -205,6 +206,28 @@ disconnected:
   *type = DISCONNECT_CLIENT;
   *length = 0;
   *bytes = NULL;
+  return;
+}
+
+void read_message_into(int fd, int64_t *type, int64_t capacity, uint8_t *bytes) {
+  int closed = read_bytes(fd, (uint8_t) type, sizeof(int64_t));
+  if (closed) {
+    goto disconnected;
+  }
+  int64_t length;
+  closed = read_bytes(fd, (uint8_t *) length, sizeof(int64_t));
+  CHECK(capacity == length);
+  if (closed) {
+    goto disconnected;
+  }
+  closed = read_bytes(fd, bytes, length);
+  if (closed) {
+    goto disconnected;
+  }
+  return;
+
+disconnected:
+  *type = DISCONNECT_CLIENT;
   return;
 }
 
