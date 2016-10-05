@@ -82,7 +82,6 @@ TEST long_ipc_socket_test(void) {
     read_message(client_fd, &type, &len, &bytes);
     ASSERT(type == LOG_MESSAGE);
     ASSERT(memcmp(test_bytes, bytes, len) == 0);
-    free(bytes);
     close(client_fd);
     close(socket_fd);
     unlink(socket_pathname);
