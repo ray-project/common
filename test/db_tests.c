@@ -23,7 +23,8 @@ char received_port2[6] = {0};
 /* Test if entries have been written to the database. */
 void test_callback(object_id object_id,
                    int manager_count,
-                   const char *manager_vector[]) {
+                   const char *manager_vector[],
+                   void *context) {
   CHECK(manager_count == 2);
   if (!manager_vector[0] ||
       sscanf(manager_vector[0], "%15[0-9.]:%5[0-9]", received_addr1,
@@ -56,7 +57,7 @@ TEST object_table_lookup_test(void) {
   object_table_add(db2, id);
   event_loop_add_timer(loop, 100, timeout_handler, NULL);
   event_loop_run(loop);
-  object_table_lookup(db1, id, test_callback);
+  object_table_lookup(db1, id, test_callback, NULL);
   event_loop_add_timer(loop, 100, timeout_handler, NULL);
   event_loop_run(loop);
   int port1 = atoi(received_port1);

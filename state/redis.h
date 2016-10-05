@@ -55,6 +55,8 @@ typedef struct {
   lookup_callback callback;
   /* Object ID that is looked up. */
   object_id object_id;
+  /* Data context for the callback. */
+  void *context;
 } lookup_callback_data;
 
 void object_table_get_entry(redisAsyncContext *c, void *r, void *privdata);

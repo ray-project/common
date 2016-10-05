@@ -150,17 +150,20 @@ void object_table_get_entry(redisAsyncContext *c, void *r, void *privdata) {
     HASH_FIND_INT(db->service_cache, &result[j], entry);
     manager_vector[j] = entry->addr;
   }
-  cb_data->callback(cb_data->object_id, manager_count, manager_vector);
+  cb_data->callback(cb_data->object_id, manager_count, manager_vector,
+                    cb_data->context);
   free(privdata);
   free(result);
 }
 
 void object_table_lookup(db_handle *db,
                          object_id object_id,
-                         lookup_callback callback) {
+                         lookup_callback callback,
+                         void *context) {
   lookup_callback_data *cb_data = malloc(sizeof(lookup_callback_data));
   cb_data->callback = callback;
   cb_data->object_id = object_id;
+  cb_data->context = context;
   redisAsyncCommand(db->context, object_table_get_entry, cb_data,
                     "SMEMBERS obj:%b", &object_id.id[0], UNIQUE_ID_SIZE);
   if (db->context->err) {
