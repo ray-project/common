@@ -28,6 +28,12 @@ matrix:
       install: []
       script:
         - .travis/check-git-clang-format-output.sh
+    - os: linux
+      dist: trusty
+      python: "2.7"
+      env: VALGRIND=1
+      script:
+        - make valgrind
 
 install:
   - ./install-dependencies.sh
