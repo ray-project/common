@@ -64,10 +64,7 @@ static PyObject *PyTask_function_id(PyObject *self) {
   return PyObjectID_make(function_id);
 }
 
-static PyObject *PyTask_arguments(PyObject *self, PyObject *args) {
-  if (!PyArg_ParseTuple(args, "")) {
-    return NULL;
-  }
+static PyObject *PyTask_arguments(PyObject *self) {
   int64_t num_args = task_num_args(((PyTask *) self)->spec);
   PyObject *arg_list = PyList_New((Py_ssize_t) num_args);
   task_spec *task = ((PyTask *) self)->spec;
@@ -85,10 +82,7 @@ static PyObject *PyTask_arguments(PyObject *self, PyObject *args) {
   return arg_list;
 }
 
-static PyObject *PyTask_returns(PyObject *self, PyObject *args) {
-  if (!PyArg_ParseTuple(args, "")) {
-    return NULL;
-  }
+static PyObject *PyTask_returns(PyObject *self) {
   int64_t num_returns = task_num_returns(((PyTask *) self)->spec);
   PyObject *return_id_list = PyList_New((Py_ssize_t) num_returns);
   task_spec *task = ((PyTask *) self)->spec;
@@ -101,11 +95,11 @@ static PyObject *PyTask_returns(PyObject *self, PyObject *args) {
 
 static PyMethodDef PyTask_methods[] = {
     {"function_id", (PyCFunction) PyTask_function_id, METH_NOARGS,
-     "Return the function id associated with this task."},
-    {"arguments", (PyCFunction) PyTask_arguments, METH_VARARGS,
-     "Return the i-th argument of the task."},
-    {"returns", (PyCFunction) PyTask_returns, METH_VARARGS,
-     "Return the i-th object reference of the task."},
+     "Return the function ID for this task."},
+    {"arguments", (PyCFunction) PyTask_arguments, METH_NOARGS,
+     "Return the arguments for the task."},
+    {"returns", (PyCFunction) PyTask_returns, METH_NOARGS,
+     "Return the object IDs for the return values of the task."},
     {NULL} /* Sentinel */
 };
 
@@ -149,6 +143,15 @@ static PyTypeObject PyTaskType = {
     0,                           /* tp_alloc */
     PyType_GenericNew,           /* tp_new */
 };
+
+/* Create a PyTask from a C struct. The resulting PyTask takes ownership of the
+ * task_spec and will deallocate it when in the destructor. */
+PyObject *PyTask_make(task_spec *task_spec) {
+  PyTask *result = PyObject_New(PyTask, &PyTaskType);
+  result = (PyTask *) PyObject_Init((PyObject *) result, &PyTaskType);
+  result->spec = task_spec;
+  return (PyObject *) result;
+}
 
 static PyMethodDef common_methods[] = {
     {"check_simple_value", check_simple_value, METH_VARARGS,

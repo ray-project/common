@@ -25,7 +25,7 @@ static int PyObjectID_init(PyObjectID *self, PyObject *args, PyObject *kwds) {
   return 0;
 }
 
-/* create PyObjectID from C */
+/* Create a PyObjectID from C. */
 PyObject *PyObjectID_make(object_id object_id) {
   PyObjectID *result = PyObject_New(PyObjectID, &PyObjectIDType);
   result = (PyObjectID *) PyObject_Init((PyObject *) result, &PyObjectIDType);
