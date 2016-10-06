@@ -65,30 +65,38 @@ static PyObject *PyTask_function_id(PyObject *self) {
 }
 
 static PyObject *PyTask_arguments(PyObject *self, PyObject *args) {
-  int arg_index;
-  task_spec *spec = ((PyTask *) self)->spec;
-  if (!PyArg_ParseTuple(args, "i", &arg_index)) {
+  if (!PyArg_ParseTuple(args, "")) {
     return NULL;
   }
-  if (task_arg_type(spec, arg_index) == ARG_BY_REF) {
-    object_id object_id = *task_arg_id(spec, arg_index);
-    return PyObjectID_make(object_id);
-  } else {
-    PyObject *s = PyMarshal_ReadObjectFromString(
-        (char *) task_arg_val(spec, arg_index),
-        (Py_ssize_t) task_arg_length(spec, arg_index));
-    Py_DECREF(s);
-    Py_RETURN_NONE;
+  int64_t num_args = task_num_args(((PyTask *) self)->spec);
+  PyObject *arg_list = PyList_New((Py_ssize_t) num_args);
+  task_spec *task = ((PyTask *) self)->spec;
+  for (int i = 0; i < num_args; ++i) {
+    if (task_arg_type(task, i) == ARG_BY_REF) {
+      object_id object_id = *task_arg_id(task, i);
+      PyList_SetItem(arg_list, i, PyObjectID_make(object_id));
+    } else {
+      PyObject *s =
+          PyMarshal_ReadObjectFromString((char *) task_arg_val(task, i),
+                                         (Py_ssize_t) task_arg_length(task, i));
+      PyList_SetItem(arg_list, i, s);
+    }
   }
+  return arg_list;
 }
 
 static PyObject *PyTask_returns(PyObject *self, PyObject *args) {
-  int ret_index;
-  if (!PyArg_ParseTuple(args, "i", &ret_index)) {
+  if (!PyArg_ParseTuple(args, "")) {
     return NULL;
   }
-  object_id object_id = *task_return(((PyTask *) self)->spec, ret_index);
-  return PyObjectID_make(object_id);
+  int64_t num_returns = task_num_returns(((PyTask *) self)->spec);
+  PyObject *return_id_list = PyList_New((Py_ssize_t) num_returns);
+  task_spec *task = ((PyTask *) self)->spec;
+  for (int i = 0; i < num_returns; ++i) {
+    object_id object_id = *task_return(task, i);
+    PyList_SetItem(return_id_list, i, PyObjectID_make(object_id));
+  }
+  return return_id_list;
 }
 
 static PyMethodDef PyTask_methods[] = {
