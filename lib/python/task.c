@@ -145,7 +145,7 @@ static PyTypeObject PyTaskType = {
 };
 
 /* Create a PyTask from a C struct. The resulting PyTask takes ownership of the
- * task_spec and will deallocate it when in the destructor. */
+ * task_spec and will deallocate the task_spec in the PyTask destructor. */
 PyObject *PyTask_make(task_spec *task_spec) {
   PyTask *result = PyObject_New(PyTask, &PyTaskType);
   result = (PyTask *) PyObject_Init((PyObject *) result, &PyTaskType);
