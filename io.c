@@ -102,18 +102,23 @@ int accept_client(int socket_fd) {
  * @param fd The file descriptor to write to.
  * @param cursor The cursor pointing to the beginning of the bytes to send.
  * @param length The size of the bytes sequence to write.
- * @return Void.
+ * @return int Whether there was an error while writing. errno will be set.
  */
-void write_bytes(int fd, uint8_t *cursor, size_t length) {
+int write_bytes(int fd, uint8_t *cursor, size_t length) {
   ssize_t nbytes = 0;
   while (length > 0) {
     /* While we haven't written the whole message, write to the file
      * descriptor, advance the cursor, and decrease the amount left to write. */
     nbytes = write(fd, cursor, length);
+    if (nbytes == -1) {
+      return -1;
+    }
+    /* TODO(swang): Return the error instead of exiting. */
     CHECK(nbytes > 0);
     cursor += nbytes;
     length -= nbytes;
   }
+  return 0;
 }
 
 /**
@@ -124,12 +129,24 @@ void write_bytes(int fd, uint8_t *cursor, size_t length) {
  * @param type The type of the message to send.
  * @param length The size in bytes of the bytes parameter.
  * @param bytes The address of the message to send.
- * @return Void.
+ * @return int Whether there was an error while writing the message. errno will
+ * be set.
  */
-void write_message(int fd, int64_t type, int64_t length, uint8_t *bytes) {
-  write_bytes(fd, (uint8_t *) &type, sizeof(type));
-  write_bytes(fd, (uint8_t *) &length, sizeof(length));
-  write_bytes(fd, bytes, length * sizeof(char));
+int write_message(int fd, int64_t type, int64_t length, uint8_t *bytes) {
+  int closed;
+  closed = write_bytes(fd, (uint8_t *) &type, sizeof(type));
+  if (closed) {
+    return closed;
+  }
+  closed = write_bytes(fd, (uint8_t *) &length, sizeof(length));
+  if (closed) {
+    return closed;
+  }
+  closed = write_bytes(fd, bytes, length * sizeof(char));
+  if (closed) {
+    return closed;
+  }
+  return 0;
 }
 
 /**
@@ -143,7 +160,7 @@ void write_message(int fd, int64_t type, int64_t length, uint8_t *bytes) {
  * @param fd The file descriptor to read from.
  * @param cursor The cursor pointing to the beginning of the buffer.
  * @param length The size of the byte sequence to read.
- * @return Void.
+ * @return int Whether or not there was an error while reading.
  */
 int read_bytes(int fd, uint8_t *cursor, size_t length) {
   ssize_t nbytes = 0;
