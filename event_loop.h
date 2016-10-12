@@ -12,6 +12,9 @@ typedef aeEventLoop event_loop;
 /* File descriptor is writable. */
 #define EVENT_LOOP_WRITE AE_WRITABLE
 
+/* Constant specifying that the timer is done and it will be removed. */
+#define EVENT_LOOP_TIMER_DONE AE_NOMORE
+
 /* Signature of the handler that will be called when there is a new event
  * on the file descriptor that this handler has been registered for. The
  * context is the one that was passed into add_file by the user. The
