@@ -112,11 +112,17 @@ int write_bytes(int fd, uint8_t *cursor, size_t length) {
     /* While we haven't written the whole message, write to the file
      * descriptor, advance the cursor, and decrease the amount left to write. */
     nbytes = write(fd, cursor, length);
-    if (nbytes == -1) {
+    if (nbytes < 0) {
+      if (errno == EAGAIN || errno == EWOULDBLOCK) {
+        continue;
+      }
+      /* TODO(swang): Return the error instead of exiting. */
+      /* Force an exit if there was any other type of error. */
+      CHECK(nbytes < 0);
+    }
+    if (nbytes == 0) {
       return -1;
     }
-    /* TODO(swang): Return the error instead of exiting. */
-    CHECK(nbytes > 0);
     cursor += nbytes;
     length -= nbytes;
   }
