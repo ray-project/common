@@ -14,6 +14,7 @@ enum common_message_type {
 
 /* Helper functions for socket communication. */
 
+int bind_inet_sock(const int port);
 int bind_ipc_sock(const char *socket_pathname);
 int connect_ipc_sock(const char *socket_pathname);
 

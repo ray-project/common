@@ -8,9 +8,46 @@
 #include <stdio.h>
 #include <inttypes.h>
 #include <stdarg.h>
+#include <sys/ioctl.h>
+#include <netinet/in.h>
 #include <utstring.h>
 
 #include "common.h"
+
+int bind_inet_sock(const int port) {
+  struct sockaddr_in name;
+  int socket_fd = socket(PF_INET, SOCK_STREAM, 0);
+  if (socket_fd < 0) {
+    LOG_ERR("socket() failed for port %d.", port);
+    return -1;
+  }
+  name.sin_family = AF_INET;
+  name.sin_port = htons(port);
+  name.sin_addr.s_addr = htonl(INADDR_ANY);
+  int on = 1;
+  /* TODO(pcm): http://stackoverflow.com/q/1150635 */
+  if (ioctl(socket_fd, FIONBIO, (char *) &on) < 0) {
+    LOG_ERR("ioctl failed");
+    close(socket_fd);
+    return -1;
+  }
+  if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0) {
+    LOG_ERR("setsockopt failed for port %d", port);
+    close(socket_fd);
+    return -1;
+  }
+  if (bind(socket_fd, (struct sockaddr *) &name, sizeof(name)) < 0) {
+    LOG_ERR("Bind failed for port %d", port);
+    close(socket_fd);
+    return -1;
+  }
+  if (listen(socket_fd, 5) == -1) {
+    LOG_ERR("Could not listen to socket %d", port);
+    close(socket_fd);
+    return -1;
+  }
+  return socket_fd;
+}
 
 /* Binds to a Unix domain streaming socket at the given
  * pathname. Removes any existing file at the pathname. Returns
@@ -27,9 +64,9 @@ int bind_ipc_sock(const char *socket_pathname) {
   int on = 1;
   if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, (char *) &on,
                  sizeof(on)) < 0) {
-    LOG_ERR("setsockopt failed");
+    LOG_ERR("setsockopt failed for pathname %s", socket_pathname);
     close(socket_fd);
-    exit(-1);
+    return -1;
   }
 
   unlink(socket_pathname);
@@ -37,6 +74,7 @@ int bind_ipc_sock(const char *socket_pathname) {
   socket_address.sun_family = AF_UNIX;
   if (strlen(socket_pathname) + 1 > sizeof(socket_address.sun_path)) {
     LOG_ERR("Socket pathname is too long.");
+    close(socket_fd);
     return -1;
   }
   strncpy(socket_address.sun_path, socket_pathname,
@@ -45,10 +83,14 @@ int bind_ipc_sock(const char *socket_pathname) {
   if (bind(socket_fd, (struct sockaddr *) &socket_address,
            sizeof(struct sockaddr_un)) != 0) {
     LOG_ERR("Bind failed for pathname %s.", socket_pathname);
+    close(socket_fd);
     return -1;
   }
-  listen(socket_fd, 5);
-
+  if (listen(socket_fd, 5) == -1) {
+    LOG_ERR("Could not listen to socket %s", socket_pathname);
+    close(socket_fd);
+    return -1;
+  }
   return socket_fd;
 }
 
