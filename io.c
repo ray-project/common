@@ -105,6 +105,8 @@ int accept_client(int socket_fd) {
  * @return int Whether there was an error while writing. errno will be set.
  */
 int write_bytes(int fd, uint8_t *cursor, size_t length) {
+  /* TODO(swang): Use select to check whether we should continue
+   * attempting the write. */
   ssize_t nbytes = 0;
   while (length > 0) {
     /* While we haven't written the whole message, write to the file
@@ -160,28 +162,14 @@ int write_message(int fd, int64_t type, int64_t length, uint8_t *bytes) {
  * @param fd The file descriptor to read from.
  * @param cursor The cursor pointing to the beginning of the buffer.
  * @param length The size of the byte sequence to read.
- * @return int Whether or not there was an error while reading.
+ * @return int Whether the number of bytes received was less
+ *         than the length requested (because of a socket
+ *         close).
  */
 int read_bytes(int fd, uint8_t *cursor, size_t length) {
-  ssize_t nbytes = 0;
-  while (length > 0) {
-    /* While we haven't read the whole message, read from the file descriptor,
-     * advance the cursor, and decrease the amount left to read. */
-    nbytes = read(fd, cursor, length);
-    if (nbytes < 0) {
-      if (errno == EAGAIN || errno == EWOULDBLOCK) {
-        continue;
-      }
-      /* Force an exit if there was any other type of error. */
-      CHECK(nbytes < 0);
-    }
-    if (nbytes == 0) {
-      return -1;
-    }
-    cursor += nbytes;
-    length -= nbytes;
-  }
-  return 0;
+  ssize_t nbytes = recv(fd, cursor, length, MSG_WAITALL);
+  CHECK(nbytes >= 0);
+  return (nbytes < length);
 }
 
 /**
