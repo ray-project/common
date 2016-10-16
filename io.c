@@ -14,6 +14,20 @@
 
 #include "common.h"
 
+/**
+ * Binds to an Internet socket at the given port. Removes any existing file at
+ * the pathname. Returns a non-blocking file descriptor for the socket, or -1
+ * if an error occurred.
+ *
+ * @note Since the returned file descriptor is non-blocking, it is not
+ * recommended to use the Linux read and write calls directly, since these
+ * might read or write a partial message. Instead, use the provided
+ * write_message and read_message methods.
+ *
+ * @param port The port to bind to.
+ * @return A non-blocking file descriptor for the socket, or -1 if an error
+ *         occurs.
+ */
 int bind_inet_sock(const int port) {
   struct sockaddr_in name;
   int socket_fd = socket(PF_INET, SOCK_STREAM, 0);
@@ -49,10 +63,14 @@ int bind_inet_sock(const int port) {
   return socket_fd;
 }
 
-/* Binds to a Unix domain streaming socket at the given
- * pathname. Removes any existing file at the pathname. Returns
- * a file descriptor for the socket, or -1 if an error
- * occurred. */
+/**
+ * Binds to a Unix domain streaming socket at the given
+ * pathname. Removes any existing file at the pathname.
+ *
+ * @param socket_pathname The pathname for the socket.
+ * @return A blocking file descriptor for the socket, or -1 if an error
+ *         occurs.
+ */
 int bind_ipc_sock(const char *socket_pathname) {
   struct sockaddr_un socket_address;
   int socket_fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -94,9 +112,11 @@ int bind_ipc_sock(const char *socket_pathname) {
   return socket_fd;
 }
 
-/* Connects to a Unix domain streaming socket at the given
+/**
+ * Connects to a Unix domain streaming socket at the given
  * pathname. Returns a file descriptor for the socket, or -1 if
- * an error occurred. */
+ * an error occurred.
+ */
 int connect_ipc_sock(const char *socket_pathname) {
   struct sockaddr_un socket_address;
   int socket_fd;
@@ -125,8 +145,10 @@ int connect_ipc_sock(const char *socket_pathname) {
   return socket_fd;
 }
 
-/* Accept a new client connection on the given socket
- * descriptor. Returns a descriptor for the new socket. */
+/**
+ * Accept a new client connection on the given socket
+ * descriptor. Returns a descriptor for the new socket.
+ */
 int accept_client(int socket_fd) {
   int client_fd = accept(socket_fd, NULL, NULL);
   if (client_fd < 0) {
@@ -137,11 +159,11 @@ int accept_client(int socket_fd) {
 }
 
 /**
- * Reliably write a sequence of bytes into a file descriptor. This will block
- * until one of the following happens: (1) there is an error (2) end of file,
- * or (3) all length bytes have been written.
+ * Write a sequence of bytes into a file descriptor. This will block until one
+ * of the following happens: (1) there is an error (2) end of file, or (3) all
+ * length bytes have been written.
  *
- * @param fd The file descriptor to write to.
+ * @param fd The file descriptor to write to. It can be non-blocking.
  * @param cursor The cursor pointing to the beginning of the bytes to send.
  * @param length The size of the bytes sequence to write.
  * @return int Whether there was an error while writing. errno will be set.
@@ -173,7 +195,7 @@ int write_bytes(int fd, uint8_t *cursor, size_t length) {
  * Write a sequence of bytes on a file descriptor. The bytes should then be read
  * by read_message.
  *
- * @param fd The file descriptor to write to.
+ * @param fd The file descriptor to write to. It can be non-blocking.
  * @param type The type of the message to send.
  * @param length The size in bytes of the bytes parameter.
  * @param bytes The address of the message to send.
@@ -198,14 +220,14 @@ int write_message(int fd, int64_t type, int64_t length, uint8_t *bytes) {
 }
 
 /**
- * Reliably read a sequence of bytes from a file descriptor into a buffer. This
- * will block until one of the following happens: (1) there is an error (2) end
- * of file, or (3) all length bytes have been written.
+ * Read a sequence of bytes from a file descriptor into a buffer. This will
+ * block until one of the following happens: (1) there is an error (2) end of
+ * file, or (3) all length bytes have been written.
  *
  * @note The buffer pointed to by cursor must already have length number of
  * bytes allocated before calling this method.
  *
- * @param fd The file descriptor to read from.
+ * @param fd The file descriptor to read from. It can be non-blocking.
  * @param cursor The cursor pointing to the beginning of the buffer.
  * @param length The size of the byte sequence to read.
  * @return int Whether or not there was an error while reading.
@@ -238,7 +260,7 @@ int read_bytes(int fd, uint8_t *cursor, size_t length) {
  *
  * @note The caller must free the memory.
  *
- * @param fd The file descriptor to read from.
+ * @param fd The file descriptor to read from. It can be non-blocking.
  * @param type The type of the message that is read will be written at this
           address.
  * @param length The size in bytes of the message that is read will be written
