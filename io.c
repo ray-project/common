@@ -166,7 +166,8 @@ int accept_client(int socket_fd) {
  * @param fd The file descriptor to write to. It can be non-blocking.
  * @param cursor The cursor pointing to the beginning of the bytes to send.
  * @param length The size of the bytes sequence to write.
- * @return int Whether there was an error while writing. errno will be set.
+ * @return int Whether there was an error while writing. 0 corresponds to
+ *         success and -1 corresponds to an error (errno will be set).
  */
 int write_bytes(int fd, uint8_t *cursor, size_t length) {
   ssize_t nbytes = 0;
@@ -199,8 +200,8 @@ int write_bytes(int fd, uint8_t *cursor, size_t length) {
  * @param type The type of the message to send.
  * @param length The size in bytes of the bytes parameter.
  * @param bytes The address of the message to send.
- * @return int Whether there was an error while writing the message. errno will
- * be set.
+ * @return int Whether there was an error while writing. 0 corresponds to
+ *         success and -1 corresponds to an error (errno will be set).
  */
 int write_message(int fd, int64_t type, int64_t length, uint8_t *bytes) {
   int closed;
@@ -230,7 +231,8 @@ int write_message(int fd, int64_t type, int64_t length, uint8_t *bytes) {
  * @param fd The file descriptor to read from. It can be non-blocking.
  * @param cursor The cursor pointing to the beginning of the buffer.
  * @param length The size of the byte sequence to read.
- * @return int Whether or not there was an error while reading.
+ * @return int Whether there was an error while writing. 0 corresponds to
+ *         success and -1 corresponds to an error (errno will be set).
  */
 int read_bytes(int fd, uint8_t *cursor, size_t length) {
   ssize_t nbytes = 0;
@@ -262,12 +264,16 @@ int read_bytes(int fd, uint8_t *cursor, size_t length) {
  *
  * @param fd The file descriptor to read from. It can be non-blocking.
  * @param type The type of the message that is read will be written at this
-          address.
+          address. If there was an error while reading, this will be
+          DISCONNECT_CLIENT.
  * @param length The size in bytes of the message that is read will be written
           at this address. This size does not include the bytes used to encode
-          the type and length.
+          the type and length. If there was an error while reading, this will
+          be 0.
  * @param bytes The address at which to write the pointer to the bytes that are
-          read and allocated by this function.
+          read and allocated by this function. If there was an error while
+          reading, this will be NULL.
+
  * @return Void.
  */
 void read_message(int fd, int64_t *type, int64_t *length, uint8_t **bytes) {
