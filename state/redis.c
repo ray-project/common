@@ -56,7 +56,8 @@ db_handle *db_connect(const char *address,
                          num_clients, client_addr, client_port);
     freeReplyObject(reply);
     reply = redisCommand(context, "EXEC");
-    if (reply) {
+    CHECK(reply);
+    if (reply->type != REDIS_REPLY_NIL) {
       freeReplyObject(reply);
       break;
     }
@@ -231,5 +232,13 @@ void task_log_register_callback(db_handle *db,
   }
   if (db->sub_context->err) {
     LOG_REDIS_ERR(db->sub_context, "error in task_log_register_callback");
+  }
+}
+
+int get_client_id(db_handle *db) {
+  if (db) {
+    return db->client_id;
+  } else {
+    return -1;
   }
 }
