@@ -1,6 +1,8 @@
 #include "greatest.h"
 
 #include <assert.h>
+#include <unistd.h>
+#include <sys/wait.h>
 
 #include "event_loop.h"
 #include "test/example_task.h"
@@ -131,12 +133,36 @@ TEST task_log_all_test(void) {
   PASS();
 }
 
+TEST unique_client_id_test(void) {
+  const int num_conns = 50;
+
+  db_handle *db;
+  pid_t pid = fork();
+  for (int i = 0; i < num_conns; ++i) {
+    db = db_connect("127.0.0.1", 6379, "plasma_manager", manager_addr,
+                    manager_port1);
+    db_disconnect(db);
+  }
+  if (pid == 0) {
+    exit(0);
+  } else {
+    wait(NULL);
+  }
+
+  db = db_connect("127.0.0.1", 6379, "plasma_manager", manager_addr,
+                  manager_port1);
+  ASSERT_EQ(get_client_id(db), num_conns * 2);
+  db_disconnect(db);
+  PASS();
+}
+
 SUITE(db_tests) {
   redisContext *context = redisConnect("127.0.0.1", 6379);
   freeReplyObject(redisCommand(context, "FLUSHALL"));
   RUN_REDIS_TEST(context, object_table_lookup_test);
   RUN_REDIS_TEST(context, task_log_test);
   RUN_REDIS_TEST(context, task_log_all_test);
+  RUN_REDIS_TEST(context, unique_client_id_test);
   redisFree(context);
 }
 
