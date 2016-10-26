@@ -4,7 +4,7 @@ BUILD = build
 
 all: hiredis $(BUILD)/libcommon.a
 
-$(BUILD)/libcommon.a: event_loop.o common.o task.o io.o state/redis.o thirdparty/ae/ae.o
+$(BUILD)/libcommon.a: event_loop.o common.o task.o io.o timer.o state/redis.o thirdparty/ae/ae.o
 	ar rcs $@ $^
 
 $(BUILD)/common_tests: test/common_tests.c $(BUILD)/libcommon.a
@@ -22,6 +22,9 @@ $(BUILD)/task_tests: test/task_tests.c $(BUILD)/libcommon.a
 $(BUILD)/redis_tests: hiredis test/redis_tests.c $(BUILD)/libcommon.a logging.h
 	$(CC) -o $@ test/redis_tests.c logging.c $(BUILD)/libcommon.a thirdparty/hiredis/libhiredis.a $(CFLAGS)
 
+$(BUILD)/timer_tests: test/timer_tests.c $(BUILD)/libcommon.a
+	$(CC) -o $@ test/timer_tests.c $(BUILD)/libcommon.a $(CFLAGS)
+
 clean:
 	rm -f *.o state/*.o test/*.o thirdparty/ae/*.o
 	rm -rf $(BUILD)/*
@@ -32,9 +35,9 @@ redis:
 hiredis:
 	git submodule update --init --recursive -- "thirdparty/hiredis" ; cd thirdparty/hiredis ; make
 
-test: hiredis redis $(BUILD)/common_tests $(BUILD)/db_tests $(BUILD)/io_tests $(BUILD)/task_tests $(BUILD)/redis_tests FORCE
+test: hiredis redis $(BUILD)/common_tests $(BUILD)/db_tests $(BUILD)/io_tests $(BUILD)/task_tests $(BUILD)/redis_tests $(BUILD)/timer_tests FORCE
 	./thirdparty/redis-3.2.3/src/redis-server &
-	sleep 1s ; ./build/common_tests ; ./build/db_tests ; ./build/io_tests ; ./build/task_tests ; ./build/redis_tests
+	sleep 1s ; ./build/common_tests ; ./build/db_tests ; ./build/io_tests ; ./build/task_tests ; ./build/redis_tests ; ./build/timer_tests
 
 valgrind: test
 	valgrind --leak-check=full --error-exitcode=1 ./build/common_tests

@@ -36,6 +36,10 @@
     }                                                          \
   } while (0);
 
+/** This macro indicates that this pointer owns the data it is pointing to
+ *  and is responsible for freeing it. */
+#define OWNER
+
 #define UNIQUE_ID_SIZE 20
 
 /* Cleanup method for running tests with the greatest library.
