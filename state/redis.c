@@ -42,9 +42,9 @@
   }                                                \
                                                    \
   if (outstanding_callbacks_find(cb_data) == NULL) \
-      /* the callback data structure has been      
-       * already freed; just ignore this reply */  \
-      return;
+    /* the callback data structure has been        \
+     * already freed; just ignore this reply */    \
+    return;
 
 db_handle *db_connect(const char *address,
                       int port,
@@ -142,12 +142,14 @@ void redis_object_table_add(table_callback_data *cb_data) {
   CHECK(cb_data);
 
   if (outstanding_callbacks_find(cb_data) == NULL)
-    /* the callback data structure has been already freed; just ignore this reply */
+    /* the callback data structure has been already freed; just ignore this
+     * reply */
     return;
 
   db_handle *db = cb_data->db_handle;
-  redisAsyncCommand(db->context, redis_object_table_add_cb, cb_data, "SADD obj:%b %d",
-                    &cb_data->id.id[0], UNIQUE_ID_SIZE, db->client_id);
+  redisAsyncCommand(db->context, redis_object_table_add_cb, cb_data,
+                    "SADD obj:%b %d", &cb_data->id.id[0], UNIQUE_ID_SIZE,
+                    db->client_id);
   if (db->context->err) {
     LOG_REDIS_ERR(db->context, "could not add object_table entry");
   }
@@ -178,8 +180,8 @@ void redis_get_cached_service(db_handle *db, int index, const char **manager) {
   HASH_FIND_INT(db->service_cache, &index, entry);
   if (!entry) {
     /* This is a very rare case. */
-    redisReply *reply = redisCommand(db->sync_context, "HGET %s %lld",
-                                     db->client_type, index);
+    redisReply *reply =
+        redisCommand(db->sync_context, "HGET %s %lld", db->client_type, index);
     CHECK(reply->type == REDIS_REPLY_STRING);
     entry = malloc(sizeof(service_cache_entry));
     entry->service_id = index;
@@ -206,7 +208,7 @@ void redis_object_table_get_entry(redisAsyncContext *c,
       managers[j] = atoi(reply->element[j]->str);
       redis_get_cached_service(db, managers[j], manager_vector + j);
     }
-    
+
     object_table_lookup_done_cb done_cb = cb_data->done_cb;
     done_cb(cb_data->id, manager_count, manager_vector, cb_data->user_context);
     /* remove timer */
@@ -218,7 +220,6 @@ void redis_object_table_get_entry(redisAsyncContext *c,
     exit(-1);
   }
 }
-
 
 void object_table_redis_callback(redisAsyncContext *c,
                                  void *r,
@@ -254,10 +255,12 @@ void redis_object_table_subscribe(table_callback_data *cb_data) {
   /* subscribe to key notification associated to object id */
 
   redisAsyncCommand(db->sub_context, object_table_redis_callback, cb_data,
-                    "SUBSCRIBE __keyspace@0__:%b add", (char *) &cb_data->id.id[0], UNIQUE_ID_SIZE);
+                    "SUBSCRIBE __keyspace@0__:%b add",
+                    (char *) &cb_data->id.id[0], UNIQUE_ID_SIZE);
 
   if (db->sub_context->err) {
-    LOG_REDIS_ERR(db->sub_context, "error in redis_object_table_subscribe_callback");
+    LOG_REDIS_ERR(db->sub_context,
+                  "error in redis_object_table_subscribe_callback");
   }
 }
 
@@ -265,42 +268,45 @@ void redis_object_table_subscribe(table_callback_data *cb_data) {
  *  ==== task_log callbacks ====
  */
 
-
 void redis_task_log_publish(table_callback_data *cb_data) {
   db_handle *db = cb_data->db_handle;
   task_instance *task_instance = cb_data->data;
   task_iid task_iid = *task_instance_id(task_instance);
   node_id node = *task_instance_node(task_instance);
   int32_t state = *task_instance_state(task_instance);
-  
+
   LOG_DEBUG("Called log_publish callback");
 
-  /* Check whether the vector (requests_info) indicating the status of the requests has been allocated.
-   * If was not allocate it, allocate it and initialize it.
-   * This vector has an entry for each redis command, and it stores true if a reply for that command
-   * has been received, and false otherwise.
-   * The first entry in the callback corresponds to RPUSH, and the second entry to PUBLISH.
-   */
+/* Check whether the vector (requests_info) indicating the status of the
+ * requests has been allocated.
+ * If was not allocate it, allocate it and initialize it.
+ * This vector has an entry for each redis command, and it stores true if a
+ * reply for that command
+ * has been received, and false otherwise.
+ * The first entry in the callback corresponds to RPUSH, and the second entry to
+ * PUBLISH.
+ */
 #define NUM_DB_REQUESTS 2
-#define PUSH_INDEX      0
-#define PUBLISH_INDEX   1
+#define PUSH_INDEX 0
+#define PUBLISH_INDEX 1
   if (cb_data->requests_info == NULL) {
     cb_data->requests_info = malloc(NUM_DB_REQUESTS * sizeof(bool));
     for (int i = 0; i < NUM_DB_REQUESTS; i++) {
-      ((bool *)cb_data->requests_info)[i] = false;
+      ((bool *) cb_data->requests_info)[i] = false;
     }
   }
 
-  if (((bool *)cb_data->requests_info)[PUSH_INDEX] == false) {
+  if (((bool *) cb_data->requests_info)[PUSH_INDEX] == false) {
     if (*task_instance_state(task_instance) == TASK_STATUS_WAITING) {
-      redisAsyncCommand(db->context, redis_task_log_publish_push_cb, cb_data, "RPUSH tasklog:%b %b",
-                        (char *) &task_iid.id[0], UNIQUE_ID_SIZE,
-                        (char *) task_instance, task_instance_size(task_instance));
+      redisAsyncCommand(db->context, redis_task_log_publish_push_cb, cb_data,
+                        "RPUSH tasklog:%b %b", (char *) &task_iid.id[0],
+                        UNIQUE_ID_SIZE, (char *) task_instance,
+                        task_instance_size(task_instance));
     } else {
       task_update update = {.state = state, .node = node};
-      redisAsyncCommand(db->context, redis_task_log_publish_push_cb, cb_data, "RPUSH tasklog:%b %b",
-                        (char *) &task_iid.id[0], UNIQUE_ID_SIZE,
-                        (char *) &update, sizeof(update));
+      redisAsyncCommand(db->context, redis_task_log_publish_push_cb, cb_data,
+                        "RPUSH tasklog:%b %b", (char *) &task_iid.id[0],
+                        UNIQUE_ID_SIZE, (char *) &update, sizeof(update));
     }
 
     if (db->context->err) {
@@ -308,10 +314,11 @@ void redis_task_log_publish(table_callback_data *cb_data) {
     }
   }
 
-  if (((bool *)cb_data->requests_info)[PUBLISH_INDEX] == false) {
-    redisAsyncCommand(db->context, redis_task_log_publish_publish_cb, cb_data, "PUBLISH task_log:%b:%d %b",
-                      (char *) &node.id[0], UNIQUE_ID_SIZE, state,
-                      (char *) task_instance, task_instance_size(task_instance));
+  if (((bool *) cb_data->requests_info)[PUBLISH_INDEX] == false) {
+    redisAsyncCommand(db->context, redis_task_log_publish_publish_cb, cb_data,
+                      "PUBLISH task_log:%b:%d %b", (char *) &node.id[0],
+                      UNIQUE_ID_SIZE, state, (char *) task_instance,
+                      task_instance_size(task_instance));
 
     if (db->context->err) {
       LOG_REDIS_ERR(db->context, "error publishing task in task_log_add_task");
@@ -325,9 +332,9 @@ void redis_task_log_publish_push_cb(redisAsyncContext *c,
   REDIS_CALLBACK_HEADER(db, cb_data, r)
 
   CHECK(cb_data->requests_info != NULL);
-  ((bool *)cb_data->requests_info)[PUSH_INDEX] = true;
+  ((bool *) cb_data->requests_info)[PUSH_INDEX] = true;
 
-  if (((bool *)cb_data->requests_info)[PUBLISH_INDEX] == true) {
+  if (((bool *) cb_data->requests_info)[PUBLISH_INDEX] == true) {
     if (cb_data->done_cb) {
       task_log_done_cb done_cb = cb_data->done_cb;
       done_cb(cb_data->id, cb_data->user_context);
@@ -336,13 +343,15 @@ void redis_task_log_publish_push_cb(redisAsyncContext *c,
   }
 }
 
-void redis_task_log_publish_publish_cb(redisAsyncContext *c, void *r, void *privdata) {
+void redis_task_log_publish_publish_cb(redisAsyncContext *c,
+                                       void *r,
+                                       void *privdata) {
   REDIS_CALLBACK_HEADER(db, cb_data, r)
 
   CHECK(cb_data->requests_info != NULL);
-  ((bool *)cb_data->requests_info)[PUBLISH_INDEX] = true;
+  ((bool *) cb_data->requests_info)[PUBLISH_INDEX] = true;
 
-  if (((bool *)cb_data->requests_info)[PUSH_INDEX] == true) {
+  if (((bool *) cb_data->requests_info)[PUSH_INDEX] == true) {
     if (cb_data->done_cb) {
       task_log_done_cb done_cb = cb_data->done_cb;
       done_cb(cb_data->id, cb_data->user_context);
@@ -351,10 +360,7 @@ void redis_task_log_publish_publish_cb(redisAsyncContext *c, void *r, void *priv
   }
 }
 
-
-void task_log_redis_callback(redisAsyncContext *c,
-                             void *r,
-                             void *privdata) {
+void task_log_redis_callback(redisAsyncContext *c, void *r, void *privdata) {
   REDIS_CALLBACK_HEADER(db, cb_data, r)
   redisReply *reply = r;
 
@@ -382,7 +388,6 @@ void task_log_redis_callback(redisAsyncContext *c,
   }
   task_instance_free(instance);
 }
-
 
 void redis_task_log_subscribe(table_callback_data *cb_data) {
   db_handle *db = cb_data->db_handle;

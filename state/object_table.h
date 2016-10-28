@@ -42,7 +42,7 @@ void object_table_lookup(db_handle *db_handle,
  *  ==== Add object call and callback ====
  */
 
- /* Callback called when the object add/remove operation completes. */
+/* Callback called when the object add/remove operation completes. */
 typedef void (*object_table_done_cb)(object_id object_id, void *user_context);
 
 /**
@@ -68,7 +68,6 @@ void object_table_add(db_handle *db_handle,
 /*
  *  ==== Remove object call and callback ====
  */
-
 
 /**
  * Object remove function.
@@ -99,15 +98,18 @@ void object_table_remove(db_handle *db,
  */
 
 /* Callback called when object object_id is available. */
-typedef void (*object_table_object_available_cb)(object_id object_id, void *user_context);
+typedef void (*object_table_object_available_cb)(object_id object_id,
+                                                 void *user_context);
 
 /**
  * Subcribing to new object available function.
  *
  * @param db_handle: Handle to db.
  * @param object_id: Object unique identifier.
- * @param object_available_cb: callback to be called when new object becomes available
- * @param subscribe_context: caller context which will be passed back in the object_available_cb
+ * @param object_available_cb: callback to be called when new object becomes
+ * available
+ * @param subscribe_context: caller context which will be passed back in the
+ * object_available_cb
  * @param retry_count: Number of retries after giving up.
  * @param timeout: Timeout after which we retry to install subscription.
  * @param done_cb: Callback to be called when subscription is installed.
@@ -116,21 +118,22 @@ typedef void (*object_table_object_available_cb)(object_id object_id, void *user
  * @return Void.
  */
 
-void object_table_subscribe(db_handle *db,
-                            object_id object_id,
-                            object_table_object_available_cb object_available_cb,
-                            void *subscribe_context,
-                            int retry_count,
-                            uint64_t timeout,
-                            object_table_done_cb done_cb,
-                            table_fail_cb fail_cb,
-                            void *user_context);
+void object_table_subscribe(
+    db_handle *db,
+    object_id object_id,
+    object_table_object_available_cb object_available_cb,
+    void *subscribe_context,
+    int retry_count,
+    uint64_t timeout,
+    object_table_done_cb done_cb,
+    table_fail_cb fail_cb,
+    void *user_context);
 
-/* Data that is needed to register new object available callbacks with the state database. */
+/* Data that is needed to register new object available callbacks with the state
+ * database. */
 typedef struct {
   object_table_object_available_cb object_available_cb;
   void *subscribe_context;
 } object_table_subscribe_data;
-
 
 #endif /* OBJECT_TABLE_H */

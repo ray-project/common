@@ -29,17 +29,17 @@ void lookup_done_cb(object_id object_id,
 
 void lookup_fail_cb(unique_id id, void *user_data) {
   lookup_failed = 1;
-  CHECK(user_data == (void*) lookup_timeout_context);
+  CHECK(user_data == (void *) lookup_timeout_context);
   event_loop_stop(g_loop);
 }
 
 TEST lookup_timeout_test(void) {
   g_loop = event_loop_create();
-  db_handle *db = db_connect("127.0.0.1", 6379, "plasma_manager", "127.0.0.1",
-                              1234);
+  db_handle *db =
+      db_connect("127.0.0.1", 6379, "plasma_manager", "127.0.0.1", 1234);
   db_attach(db, g_loop);
   object_table_lookup(db, NIL_ID, 5, 100, lookup_done_cb, lookup_fail_cb,
-                      (void*) lookup_timeout_context);
+                      (void *) lookup_timeout_context);
   /* Disconnect the database to see if the lookup times out. */
   close(db->context->c.fd);
   event_loop_run(g_loop);
@@ -54,24 +54,24 @@ TEST lookup_timeout_test(void) {
 const char *add_timeout_context = "add_timeout";
 int add_failed = 0;
 
-void add_done_cb(object_id object_id,
-                 void *user_context) {
+void add_done_cb(object_id object_id, void *user_context) {
   /* The done callback should not be called. */
   CHECK(0);
 }
 
 void add_fail_cb(unique_id id, void *user_data) {
   add_failed = 1;
-  CHECK(user_data == (void*) add_timeout_context);
+  CHECK(user_data == (void *) add_timeout_context);
   event_loop_stop(g_loop);
 }
 
 TEST add_timeout_test(void) {
   g_loop = event_loop_create();
-  db_handle *db = db_connect("127.0.0.1", 6379, "plasma_manager", "127.0.0.1",
-                              1234);
+  db_handle *db =
+      db_connect("127.0.0.1", 6379, "plasma_manager", "127.0.0.1", 1234);
   db_attach(db, g_loop);
-  object_table_add(db, NIL_ID, 5, 100, add_done_cb, add_fail_cb, (void*) add_timeout_context);
+  object_table_add(db, NIL_ID, 5, 100, add_done_cb, add_fail_cb,
+                   (void *) add_timeout_context);
   /* Disconnect the database to see if the lookup times out. */
   close(db->context->c.fd);
   event_loop_run(g_loop);
@@ -81,30 +81,29 @@ TEST add_timeout_test(void) {
   PASS();
 }
 
-
 /* === Test subscribe timeout === */
 
 const char *subscribe_timeout_context = "subscribe_timeout";
 int subscribe_failed = 0;
 
-void subscribe_done_cb(object_id object_id,
-                       void *user_context) {
+void subscribe_done_cb(object_id object_id, void *user_context) {
   /* The done callback should not be called. */
   CHECK(0);
 }
 
 void subscribe_fail_cb(unique_id id, void *user_data) {
   subscribe_failed = 1;
-  CHECK(user_data == (void*) subscribe_timeout_context);
+  CHECK(user_data == (void *) subscribe_timeout_context);
   event_loop_stop(g_loop);
 }
 
 TEST subscribe_timeout_test(void) {
   g_loop = event_loop_create();
-  db_handle *db = db_connect("127.0.0.1", 6379, "plasma_manager", "127.0.0.1",
-                             1234);
+  db_handle *db =
+      db_connect("127.0.0.1", 6379, "plasma_manager", "127.0.0.1", 1234);
   db_attach(db, g_loop);
-  object_table_subscribe(db, NIL_ID, NULL, NULL, 5, 100, subscribe_done_cb, subscribe_fail_cb, (void *) subscribe_timeout_context);
+  object_table_subscribe(db, NIL_ID, NULL, NULL, 5, 100, subscribe_done_cb,
+                         subscribe_fail_cb, (void *) subscribe_timeout_context);
   /* Disconnect the database to see if the lookup times out. */
   close(db->sub_context->c.fd);
   event_loop_run(g_loop);
@@ -114,10 +113,11 @@ TEST subscribe_timeout_test(void) {
   PASS();
 }
 
-
 /* ==== Test if the retry is working correctly ==== */
 
-int64_t reconnect_context_cb(event_loop *loop, int64_t timer_id, void *context) {
+int64_t reconnect_context_cb(event_loop *loop,
+                             int64_t timer_id,
+                             void *context) {
   db_handle *db = context;
   /* Reconnect to redis. This is not reconnecting the pub/sub channel. */
   redisAsyncFree(db->context);
@@ -158,11 +158,11 @@ void lookup_retry_fail_cb(unique_id id, void *user_data) {
 
 TEST lookup_retry_test(void) {
   g_loop = event_loop_create();
-  db_handle *db = db_connect("127.0.0.1", 6379, "plasma_manager", "127.0.0.1",
-                             11235);
+  db_handle *db =
+      db_connect("127.0.0.1", 6379, "plasma_manager", "127.0.0.1", 11235);
   db_attach(db, g_loop);
   object_table_lookup(db, NIL_ID, 5, 100, lookup_retry_done_cb,
-                      lookup_retry_fail_cb, (void*) lookup_retry_context);
+                      lookup_retry_fail_cb, (void *) lookup_retry_context);
   /* Disconnect the database to let the lookup time out the first time. */
   close(db->context->c.fd);
   /* Install handler for reconnecting the database. */
@@ -181,8 +181,7 @@ TEST lookup_retry_test(void) {
 const char *add_retry_context = "add_retry";
 int add_retry_succeeded = 0;
 
-void add_retry_done_cb(object_id object_id,
-                       void *user_context) {
+void add_retry_done_cb(object_id object_id, void *user_context) {
   CHECK(user_context == (void *) add_retry_context);
   add_retry_succeeded = 1;
 }
@@ -194,11 +193,11 @@ void add_retry_fail_cb(unique_id id, void *user_data) {
 
 TEST add_retry_test(void) {
   g_loop = event_loop_create();
-  db_handle *db = db_connect("127.0.0.1", 6379, "plasma_manager", "127.0.0.1",
-                             11235);
+  db_handle *db =
+      db_connect("127.0.0.1", 6379, "plasma_manager", "127.0.0.1", 11235);
   db_attach(db, g_loop);
-  object_table_add(db, NIL_ID, 5, 100, add_retry_done_cb,
-                   add_retry_fail_cb, (void*) add_retry_context);
+  object_table_add(db, NIL_ID, 5, 100, add_retry_done_cb, add_retry_fail_cb,
+                   (void *) add_retry_context);
   /* Disconnect the database to let the add time out the first time. */
   close(db->context->c.fd);
   /* Install handler for reconnecting the database. */
@@ -217,7 +216,9 @@ TEST add_retry_test(void) {
 const char *subscribe_retry_context = "subscribe_retry";
 int subscribe_retry_succeeded = 0;
 
-int64_t reconnect_sub_context_cb(event_loop *loop, int64_t timer_id, void *context) {
+int64_t reconnect_sub_context_cb(event_loop *loop,
+                                 int64_t timer_id,
+                                 void *context) {
   db_handle *db = context;
   /* Reconnect to redis. This is not reconnecting the pub/sub channel. */
   redisAsyncFree(db->sub_context);
@@ -230,8 +231,7 @@ int64_t reconnect_sub_context_cb(event_loop *loop, int64_t timer_id, void *conte
   return EVENT_LOOP_TIMER_DONE;
 }
 
-void subscribe_retry_done_cb(object_id object_id,
-                             void *user_context) {
+void subscribe_retry_done_cb(object_id object_id, void *user_context) {
   CHECK(user_context == (void *) subscribe_retry_context);
   subscribe_retry_succeeded = 1;
 }
@@ -243,11 +243,12 @@ void subscribe_retry_fail_cb(unique_id id, void *user_data) {
 
 TEST subscribe_retry_test(void) {
   g_loop = event_loop_create();
-  db_handle *db = db_connect("127.0.0.1", 6379, "plasma_manager", "127.0.0.1",
-                             11235);
+  db_handle *db =
+      db_connect("127.0.0.1", 6379, "plasma_manager", "127.0.0.1", 11235);
   db_attach(db, g_loop);
-  object_table_subscribe(db, NIL_ID, NULL, NULL, 5, 100, subscribe_retry_done_cb,
-                         subscribe_retry_fail_cb, (void*) subscribe_retry_context);
+  object_table_subscribe(db, NIL_ID, NULL, NULL, 5, 100,
+                         subscribe_retry_done_cb, subscribe_retry_fail_cb,
+                         (void *) subscribe_retry_context);
   /* Disconnect the database to let the subscribe times out the first time. */
   close(db->sub_context->c.fd);
   /* Install handler for reconnecting the database. */
@@ -265,7 +266,7 @@ TEST subscribe_retry_test(void) {
 
 /* === Test lookup late succeed === */
 
-const char* lookup_late_context = "lookup_late";
+const char *lookup_late_context = "lookup_late";
 int lookup_late_failed = 0;
 
 void lookup_late_fail_cb(unique_id id, void *user_context) {
@@ -283,11 +284,11 @@ void lookup_late_done_cb(object_id object_id,
 
 TEST lookup_late_test(void) {
   g_loop = event_loop_create();
-  db_handle *db = db_connect("127.0.0.1", 6379, "plasma_manager", "127.0.0.1",
-                             11236);
+  db_handle *db =
+      db_connect("127.0.0.1", 6379, "plasma_manager", "127.0.0.1", 11236);
   db_attach(db, g_loop);
   object_table_lookup(db, NIL_ID, 0, 0, lookup_late_done_cb,
-                      lookup_late_fail_cb, (void*) lookup_late_context);
+                      lookup_late_fail_cb, (void *) lookup_late_context);
   /* Install handler for terminating the event loop. */
   event_loop_add_timer(g_loop, 750, terminate_event_loop_cb, NULL);
   /* First process timer events to make sure the timeout is processed before
@@ -310,19 +311,18 @@ void add_late_fail_cb(unique_id id, void *user_context) {
   add_late_failed = 1;
 }
 
-void add_late_done_cb(object_id object_id,
-                      void *user_context) {
+void add_late_done_cb(object_id object_id, void *user_context) {
   /* This function should never be called. */
   CHECK(0);
 }
 
 TEST add_late_test(void) {
   g_loop = event_loop_create();
-  db_handle *db = db_connect("127.0.0.1", 6379, "plasma_manager", "127.0.0.1",
-                             11236);
+  db_handle *db =
+      db_connect("127.0.0.1", 6379, "plasma_manager", "127.0.0.1", 11236);
   db_attach(db, g_loop);
-  object_table_add(db, NIL_ID, 0, 0, add_late_done_cb,
-                   add_late_fail_cb, (void*) add_late_context);
+  object_table_add(db, NIL_ID, 0, 0, add_late_done_cb, add_late_fail_cb,
+                   (void *) add_late_context);
   /* Install handler for terminating the event loop. */
   event_loop_add_timer(g_loop, 750, terminate_event_loop_cb, NULL);
   /* First process timer events to make sure the timeout is processed before
@@ -345,19 +345,19 @@ void subscribe_late_fail_cb(unique_id id, void *user_context) {
   subscribe_late_failed = 1;
 }
 
-void subscribe_late_done_cb(object_id object_id,
-                            void *user_context) {
+void subscribe_late_done_cb(object_id object_id, void *user_context) {
   /* This function should never be called. */
   CHECK(0);
 }
 
 TEST subscribe_late_test(void) {
   g_loop = event_loop_create();
-  db_handle *db = db_connect("127.0.0.1", 6379, "plasma_manager", "127.0.0.1",
-                             11236);
+  db_handle *db =
+      db_connect("127.0.0.1", 6379, "plasma_manager", "127.0.0.1", 11236);
   db_attach(db, g_loop);
   object_table_subscribe(db, NIL_ID, NULL, NULL, 0, 0, subscribe_late_done_cb,
-                         subscribe_late_fail_cb, (void*) subscribe_late_context);
+                         subscribe_late_fail_cb,
+                         (void *) subscribe_late_context);
   /* Install handler for terminating the event loop. */
   event_loop_add_timer(g_loop, 750, terminate_event_loop_cb, NULL);
   /* First process timer events to make sure the timeout is processed before
@@ -370,10 +370,9 @@ TEST subscribe_late_test(void) {
   PASS();
 }
 
-
 /* === Test subscribe object available succeed === */
 
-const char* subscribe_success_context = "subscribe_success";
+const char *subscribe_success_context = "subscribe_success";
 int subscribe_success_done = 0;
 int subscribe_success_succeeded = 0;
 
@@ -383,31 +382,28 @@ void subscribe_success_fail_cb(unique_id id, void *user_context) {
 }
 
 void subscribe_success_done_cb(object_id object_id, void *user_context) {
-  object_table_add((db_handle *)user_context, object_id, 0, 0, NULL, NULL, NULL);
+  object_table_add((db_handle *) user_context, object_id, 0, 0, NULL, NULL,
+                   NULL);
   subscribe_success_done = 1;
 }
 
 void subscribe_success_object_available_cb(object_id object_id,
                                            void *user_context) {
-  CHECK(user_context == (void*) subscribe_success_context);
+  CHECK(user_context == (void *) subscribe_success_context);
   subscribe_success_succeeded = 1;
 }
 
-
 TEST subscribe_success_test(void) {
   g_loop = event_loop_create();
-  db_handle *db = db_connect("127.0.0.1", 6379, "plasma_manager", "127.0.0.1",
-                             11236);
+  db_handle *db =
+      db_connect("127.0.0.1", 6379, "plasma_manager", "127.0.0.1", 11236);
   db_attach(db, g_loop);
   unique_id id = globally_unique_id();
 
-  object_table_subscribe(db, id,
-                         subscribe_success_object_available_cb,
-                         (void*) subscribe_success_context, 0, 100,
-                         subscribe_success_done_cb,
-                         subscribe_success_fail_cb,
+  object_table_subscribe(db, id, subscribe_success_object_available_cb,
+                         (void *) subscribe_success_context, 0, 100,
+                         subscribe_success_done_cb, subscribe_success_fail_cb,
                          (void *) db);
-
 
   /* Install handler for terminating the event loop. */
   event_loop_add_timer(g_loop, 750, terminate_event_loop_cb, NULL);
